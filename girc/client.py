@@ -14,6 +14,28 @@ from .events import numerics
 loop = asyncio.get_event_loop()
 
 
+class NickMask:
+    def __init__(self, mask):
+        self.nick = ''
+        self.user = ''
+        self.host = ''
+
+        if '!' in mask:
+            self.nick, rest = mask.split('!', 1)
+            if '@' in rest:
+                self.user, self.host = rest.split('@', 1)
+        else:
+            self.nick = mask
+
+    @property
+    def userhost(self):
+        return '{}@{}'.format(self.user, self.host)
+
+    @property
+    def nickmask(self):
+        return '{}!{}@{}'.format(self.nick, self.user, self.host)
+
+
 def message_to_event(message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
@@ -71,8 +93,9 @@ class ServerConnection(asyncio.Protocol):
         self.channels.set_std(casemap)
 
     def is_channel(self, name):
-        if name[0] in self.features:
-            ...
+        if name[0] in self.features.get('chantypes'):
+            return True
+        return False
 
     def connection_made(self, transport):
         peername, port = transport.get_extra_info('peername')
