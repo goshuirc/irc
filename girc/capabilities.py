@@ -18,7 +18,7 @@ class Capabilities:
 
             for cap in caps:
                 # strip first initial =/~
-                if cap.startswith('='):
+                if cap.startswith('=') or cap.startswith('~'):
                     cap = cap[1:]
 
                 if '=' in cap:

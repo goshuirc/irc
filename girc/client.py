@@ -164,6 +164,7 @@ class ServerConnection(asyncio.Protocol):
             m = RFC1459Message.from_message(data)
             m.server = self
             self.events.dispatch(*message_to_event(m))
+            self.events.dispatch('girc all', message_to_event(m)[1])
 
             m = RFC1459Message.from_data('raw in')
             m.server = self
