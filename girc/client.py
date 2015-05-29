@@ -82,6 +82,7 @@ class ServerConnection(asyncio.Protocol):
         self.register_event('cap', self.rpl_cap)
         self.register_event('features', self.rpl_features)
         self.register_event('endofmotd', self.rpl_endofmotd)
+        self.register_event('ping', self.rpl_ping)
 
         self.manifold = manifold
         self.manifold._append_server(self)
@@ -133,6 +134,9 @@ class ServerConnection(asyncio.Protocol):
         if not self.ready:
             self.ready = True
 
+    def rpl_ping(self, info):
+        self.send('PONG', params=info['params'])
+
     def connection_lost(self, exc):
         if not self.connected:
             return
@@ -161,15 +165,15 @@ class ServerConnection(asyncio.Protocol):
 
         # dispatch new messages
         for data in messages:
-            m = RFC1459Message.from_message(data)
-            m.server = self
-            self.events.dispatch(*message_to_event(m))
-            self.events.dispatch('girc all', message_to_event(m)[1])
-
             m = RFC1459Message.from_data('raw in')
             m.server = self
             m.data = data
             self.events.dispatch(*message_to_event(m))
+
+            m = RFC1459Message.from_message(data)
+            m.server = self
+            self.events.dispatch(*message_to_event(m))
+            self.events.dispatch('girc all', message_to_event(m)[1])
 
     def register_event(self, verb, child_fn, priority=10):
         self.events.register('girc ' + verb, child_fn, priority=priority)

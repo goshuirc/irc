@@ -7,13 +7,13 @@ reactor = girc.Reactor()
 
 reactor.connect_to_server('local', '127.0.0.1', 6667, nick='goshu', user='n')
 
-@reactor.handler('raw in')
+@reactor.handler('raw in', priority=1)
 def handle_raw_in(info):
-    print('<-', info['data'])
+    print(info['server'].name, ' ->', info['data'])
 
-@reactor.handler('raw out')
+@reactor.handler('raw out', priority=1)
 def handle_raw_out(info):
-    print('->', info['data'])
+    print(info['server'].name, '<- ', info['data'])
 
 print('Connecting')
 try:
