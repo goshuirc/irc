@@ -37,31 +37,32 @@ class Reactor:
 
         for verb, infos in self._event_handlers.items():
             for info in infos:
-                server.register_event(verb, info['handler'], priority=info['priority'])
+                server.register_event(verb, info['handler'], direction=info['direction'], priority=info['priority'])
 
         if server.name in self.autojoin_channels:
             server.join_channels(*self.autojoin_channels[server.name])
 
-    def handler(self, verb, priority=10):
+    def handler(self, verb, direction='in', priority=10):
         def parent_fn(func):
             @functools.wraps(func)
             def child_fn(msg):
                 func(msg)
-            self.register_event(verb, child_fn, priority=priority)
+            self.register_event(verb, child_fn, direction=direction, priority=priority)
             return child_fn
         return parent_fn
 
-    def register_event(self, verb, child_fn, priority=10):
+    def register_event(self, verb, child_fn, direction='in', priority=10):
         if verb not in self._event_handlers:
             self._event_handlers[verb] = []
 
         self._event_handlers[verb].append({
             'handler': child_fn,
+            'direction': direction,
             'priority': priority,
         })
 
         for name, server in self.servers.items():
-            server.register_event(verb, child_fn, priority=priority)
+            server.register_event(verb, child_fn, direction=direction, priority=priority)
 
     def start(self):
         loop.run_forever()

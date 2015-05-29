@@ -14,7 +14,7 @@ from .events import numerics
 loop = asyncio.get_event_loop()
 
 
-def message_to_event(message):
+def message_to_event(direction, message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
     We do this because we have to handle special things as well.
@@ -31,7 +31,8 @@ def message_to_event(message):
 
     # this is the same as ircreactor does
     info = message.__dict__
-    return 'girc ' + verb, info
+    info['direction'] = direction
+    return 'girc ' + verb + ' ' + direction, info
 
 
 
@@ -55,12 +56,18 @@ class ServerConnection(asyncio.Protocol):
         self.clients = IDict()
         self.channels = IDict()
         self.capabilities = Capabilities(wanted=[
+            'account-notify',
             'account-tag',
+            'away-notify',
+            'cap-notify',
             'chghost',
             'extended-join',
+            'invite-notify',
             'metadata',
+            'monitor',
             'multi-prefix',
             'sasl',
+            'server-time',
             'userhost-in-names',
         ])
         self.features = Features(self)
@@ -178,27 +185,42 @@ class ServerConnection(asyncio.Protocol):
 
         # dispatch new messages
         for data in messages:
-            m = RFC1459Message.from_data('raw in')
+            m = RFC1459Message.from_data('raw')
             m.server = self
             m.data = data
-            self.events.dispatch(*message_to_event(m))
+            self.events.dispatch(*message_to_event('in', m))
+            self.events.dispatch(*message_to_event('both', m))
 
             m = RFC1459Message.from_message(data)
             m.server = self
-            self.events.dispatch(*message_to_event(m))
-            self.events.dispatch('girc all', message_to_event(m)[1])
+            name, event = message_to_event('in', m)
+            self.events.dispatch(name, event)
+            name, event = message_to_event('both', m)
+            self.events.dispatch(name, event)
+            self.events.dispatch('girc all in', event)
+            self.events.dispatch('girc all both', event)
 
-    def register_event(self, verb, child_fn, priority=10):
-        self.events.register('girc ' + verb, child_fn, priority=priority)
+    def register_event(self, verb, child_fn, direction='in', priority=10):
+        self.events.register('girc ' + verb + ' ' + direction, child_fn, priority=priority)
 
     def send(self, verb, params=None, source=None, tags=None):
         m = RFC1459Message.from_data(verb, params=params, source=source, tags=tags)
         self._send_message(m)
 
     def _send_message(self, message):
-        m = RFC1459Message.from_data('raw out')
+        m = RFC1459Message.from_data('raw')
         m.server = self
         m.data = message.to_message()
-        self.events.dispatch(*message_to_event(m))
+        self.events.dispatch(*message_to_event('out', m))
+        self.events.dispatch(*message_to_event('both', m))
+
+        m = message
+        m.server = self
+        name, event = message_to_event('out', m)
+        self.events.dispatch(name, event)
+        name, event = message_to_event('both', m)
+        self.events.dispatch(name, event)
+        self.events.dispatch('girc all out', event)
+        self.events.dispatch('girc all both', event)
 
         self.transport.write(bytes(message.to_message() + '\r\n', 'UTF-8'))
