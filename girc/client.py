@@ -14,28 +14,6 @@ from .events import numerics
 loop = asyncio.get_event_loop()
 
 
-class NickMask:
-    def __init__(self, mask):
-        self.nick = ''
-        self.user = ''
-        self.host = ''
-
-        if '!' in mask:
-            self.nick, rest = mask.split('!', 1)
-            if '@' in rest:
-                self.user, self.host = rest.split('@', 1)
-        else:
-            self.nick = mask
-
-    @property
-    def userhost(self):
-        return '{}@{}'.format(self.user, self.host)
-
-    @property
-    def nickmask(self):
-        return '{}!{}@{}'.format(self.nick, self.user, self.host)
-
-
 def message_to_event(message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
@@ -58,7 +36,7 @@ def message_to_event(message):
 
 
 class ServerConnection(asyncio.Protocol):
-    def __init__(self, name=None, manifold=None, nick=None, user=None, real='*'):
+    def __init__(self, name=None, reactor=None, nick=None, user=None, real='*'):
         self.connected = False
         self.ready = False
         self.events = EventManager()
@@ -71,27 +49,47 @@ class ServerConnection(asyncio.Protocol):
         self.nick = nick
         self.user = user
         self.real = real
+        self.autojoin_channels = []
 
         # generated info
         self.clients = IDict()
         self.channels = IDict()
-        self.capabilities = Capabilities(wanted=['multi-prefix'])
+        self.capabilities = Capabilities(wanted=[
+            'account-tag',
+            'chghost',
+            'extended-join',
+            'metadata',
+            'multi-prefix',
+            'sasl',
+            'userhost-in-names',
+        ])
         self.features = Features(self)
 
         # events
         self.register_event('cap', self.rpl_cap)
         self.register_event('features', self.rpl_features)
         self.register_event('endofmotd', self.rpl_endofmotd)
+        self.register_event('nomotd', self.rpl_endofmotd)
         self.register_event('ping', self.rpl_ping)
 
-        self.manifold = manifold
-        self.manifold._append_server(self)
+        self.reactor = reactor
+        self.reactor._append_server(self)
 
     def set_casemapping(self, casemap):
         casemap = casemap.casefold()
 
         self.clients.set_std(casemap)
         self.channels.set_std(casemap)
+
+    def istring(self, in_string=''):
+        new_string = IString(in_string)
+        new_string.set_std(features.get('casemapping'))
+        return new_string
+
+    def idict(self, in_dict={}):
+        new_dict = IDict(in_dict)
+        new_dict.set_std(features.get('casemapping'))
+        return new_dict
 
     def is_channel(self, name):
         if name[0] in self.features.get('chantypes'):
@@ -109,6 +107,18 @@ class ServerConnection(asyncio.Protocol):
     def send_welcome(self):
         self.send('NICK', params=[self.nick])
         self.send('USER', params=[self.user, '*', '*', self.real])
+
+    def join_channels(self, *channels):
+        if self.ready:
+            for channel in channels:
+                if ' ' in channel:
+                    channel, key = channel.split(' ')
+                else:
+                    key = ''
+
+                self.send('JOIN', params=[channel, key])
+        else:
+            self.autojoin_channels = channels
 
     def rpl_cap(self, info):
         clientname = info['params'].pop(0)
@@ -133,6 +143,9 @@ class ServerConnection(asyncio.Protocol):
     def rpl_endofmotd(self, info):
         if not self.ready:
             self.ready = True
+
+            if self.autojoin_channels:
+                self.join_channels(*self.autojoin_channels)
 
     def rpl_ping(self, info):
         self.send('PONG', params=info['params'])

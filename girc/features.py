@@ -19,7 +19,7 @@ class Features:
         self.server_connection = server_connection
 
         # RFC1459 basics
-        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#')
+        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'CASEMAPPING=rfc1459')
 
     def ingest(self, *parameters):
         for feature in parameters:

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .utils import CaseInsensitiveDict, CaseInsensitiveList
 
 
 class Capabilities:
     """Ingests sets of client capabilities and provides access to them."""
     def __init__(self, wanted=[]):
-        self.available = {}
-        self.wanted = wanted
-        self.enabled = []
+        self.available = CaseInsensitiveDict()
+        self.wanted = CaseInsensitiveList(wanted)
+        self.enabled = CaseInsensitiveList()
 
     def ingest(self, cmd, parameters):
         cmd = cmd.casefold()

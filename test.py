@@ -6,6 +6,7 @@ import girc
 reactor = girc.Reactor()
 
 reactor.connect_to_server('local', '127.0.0.1', 6667, nick='goshu', user='n')
+reactor.join_channels('local', '#services', '#a', '#testchan')
 
 @reactor.handler('raw in', priority=1)
 def handle_raw_in(info):

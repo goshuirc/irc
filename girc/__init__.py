@@ -5,6 +5,7 @@ import asyncio
 import functools
 
 from .client import ServerConnection
+from .utils import CaseInsensitiveDict
 
 loop = asyncio.get_event_loop()
 
@@ -12,15 +13,24 @@ loop = asyncio.get_event_loop()
 class Reactor:
     """Manages IRC connections."""
     def __init__(self):
-        self.servers = {}
+        self.autojoin_channels = CaseInsensitiveDict()
+        self.servers = CaseInsensitiveDict()
         self._event_handlers = {}
 
     def connect_to_server(self, name, *args, nick=None, user='', **kwargs):
         if nick is None:
             raise Exception('nick must be passed to connect_to_server')
 
-        connection = loop.create_connection(functools.partial(ServerConnection, name=name, manifold=self, nick=nick, user=user), *args, **kwargs)
+        connection = loop.create_connection(functools.partial(ServerConnection, name=name, reactor=self, nick=nick, user=user), *args, **kwargs)
         t = asyncio.Task(connection)
+
+    def join_channels(self, name, *chans):
+        name = name.casefold()
+        if name in self.servers:
+            self.servers[name].join_channels(*chans)
+        else:
+            # server will pickup list when they exist
+            self.autojoin_channels[name] = chans
 
     def _append_server(self, server):
         self.servers[server.name] = server
@@ -28,6 +38,9 @@ class Reactor:
         for verb, infos in self._event_handlers.items():
             for info in infos:
                 server.register_event(verb, info['handler'], priority=info['priority'])
+
+        if server.name in self.autojoin_channels:
+            server.join_channels(*self.autojoin_channels[server.name])
 
     def handler(self, verb, priority=10):
         def parent_fn(func):
