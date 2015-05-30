@@ -326,5 +326,5 @@ numerics = {
     '981': 'toomanylanguages',
     '982': 'nolanguage',
     '983': 'texttooshort',
-    '999': 'numeric_err',
+    '999': 'numeric_error',
 }
