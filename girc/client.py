@@ -145,7 +145,7 @@ class ServerConnection(asyncio.Protocol):
             return
 
         if subcmd == 'ls':
-            caps_to_enable = self.capabilities.to_enable()
+            caps_to_enable = self.capabilities.to_enable
             self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
         elif subcmd == 'ack':
             self.send('CAP', params=['END'])

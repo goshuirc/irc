@@ -29,11 +29,12 @@ class Capabilities:
 
                 self.available[cap] = value
 
+    @property
     def to_enable(self):
         l = []
 
         for cap in self.wanted:
-            if cap in self.available:
+            if cap in self.available and cap not in self.enabled:
                 l.append(cap)
 
         return l
