@@ -17,20 +17,20 @@ class Reactor:
         self.servers = CaseInsensitiveDict()
         self._event_handlers = {}
 
-    def connect_to_server(self, name, *args, nick=None, user='', **kwargs):
+    def connect_to_server(self, server_name, *args, nick=None, user='', **kwargs):
         if nick is None:
             raise Exception('nick must be passed to connect_to_server')
 
-        connection = loop.create_connection(functools.partial(ServerConnection, name=name, reactor=self, nick=nick, user=user), *args, **kwargs)
+        connection = loop.create_connection(functools.partial(ServerConnection, name=server_name, reactor=self, nick=nick, user=user), *args, **kwargs)
         t = asyncio.Task(connection)
 
-    def join_channels(self, name, *chans):
-        name = name.casefold()
-        if name in self.servers:
-            self.servers[name].join_channels(*chans)
+    def join_channels(self, server_name, *chans):
+        server_name = server_name.casefold()
+        if server_name in self.servers:
+            self.servers[server_name].join_channels(*chans)
         else:
             # server will pickup list when they exist
-            self.autojoin_channels[name] = chans
+            self.autojoin_channels[server_name] = chans
 
     def _append_server(self, server):
         self.servers[server.name] = server
