@@ -37,7 +37,7 @@ class Reactor:
 
         for verb, infos in self._event_handlers.items():
             for info in infos:
-                server.register_event(verb, info['handler'], direction=info['direction'], priority=info['priority'])
+                server.register_event(verb, info['direction'], info['handler'], priority=info['priority'])
 
         if server.name in self.autojoin_channels:
             server.join_channels(*self.autojoin_channels[server.name])

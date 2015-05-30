@@ -32,7 +32,7 @@ def message_to_event(direction, message):
     # this is the same as ircreactor does
     info = message.__dict__
     info['direction'] = direction
-    return 'girc ' + verb + ' ' + direction, info
+    return 'girc ' + verb, info
 
 
 
@@ -40,7 +40,8 @@ class ServerConnection(asyncio.Protocol):
     def __init__(self, name=None, reactor=None, nick=None, user=None, real='*'):
         self.connected = False
         self.ready = False
-        self.events = EventManager()
+        self._events_in = EventManager()
+        self._events_out = EventManager()
         self._new_data = ''
 
         # name used for this server, eg: rizon
@@ -73,11 +74,11 @@ class ServerConnection(asyncio.Protocol):
         self.features = Features(self)
 
         # events
-        self.register_event('cap', self.rpl_cap)
-        self.register_event('features', self.rpl_features)
-        self.register_event('endofmotd', self.rpl_endofmotd)
-        self.register_event('nomotd', self.rpl_endofmotd)
-        self.register_event('ping', self.rpl_ping)
+        self.register_event('cap', 'both', self.rpl_cap)
+        self.register_event('features', 'both', self.rpl_features)
+        self.register_event('endofmotd', 'both', self.rpl_endofmotd)
+        self.register_event('nomotd', 'both', self.rpl_endofmotd)
+        self.register_event('ping', 'both', self.rpl_ping)
 
         self.reactor = reactor
         self.reactor._append_server(self)
@@ -118,17 +119,24 @@ class ServerConnection(asyncio.Protocol):
     def join_channels(self, *channels):
         if self.ready:
             for channel in channels:
+                params = []
+
                 if ' ' in channel:
                     channel, key = channel.split(' ')
                 else:
-                    key = ''
+                    key = None
+
+                params.append(channel)
+                if key:
+                    params.append(key)
 
                 self.send('JOIN', params=[channel, key])
         else:
             self.autojoin_channels = channels
 
     def rpl_cap(self, info):
-        clientname = info['params'].pop(0)
+        if info['direction'] == 'in':
+            clientname = info['params'].pop(0)
         subcmd = info['params'].pop(0).casefold()
 
         self.capabilities.ingest(subcmd, info['params'])
@@ -188,39 +196,40 @@ class ServerConnection(asyncio.Protocol):
             m = RFC1459Message.from_data('raw')
             m.server = self
             m.data = data
-            self.events.dispatch(*message_to_event('in', m))
-            self.events.dispatch(*message_to_event('both', m))
+            self._events_in.dispatch(*message_to_event('in', m))
 
             m = RFC1459Message.from_message(data)
             m.server = self
             name, event = message_to_event('in', m)
-            self.events.dispatch(name, event)
-            name, event = message_to_event('both', m)
-            self.events.dispatch(name, event)
-            self.events.dispatch('girc all in', event)
-            self.events.dispatch('girc all both', event)
+            self._events_in.dispatch(name, event)
+            self._events_in.dispatch('girc all', event)
 
-    def register_event(self, verb, child_fn, direction='in', priority=10):
-        self.events.register('girc ' + verb + ' ' + direction, child_fn, priority=priority)
+    def register_event(self, verb, direction, child_fn, priority=10):
+        event_managers = []
+        if direction in ('in', 'both'):
+            event_managers.append(self._events_in)
+        if direction in ('out', 'both'):
+            event_managers.append(self._events_out)
+
+        for event_manager in event_managers:
+            event_manager.register('girc ' + verb, child_fn, priority=priority)
 
     def send(self, verb, params=None, source=None, tags=None):
         m = RFC1459Message.from_data(verb, params=params, source=source, tags=tags)
         self._send_message(m)
 
     def _send_message(self, message):
+        final_message = message.to_message() + '\r\n'
+
         m = RFC1459Message.from_data('raw')
         m.server = self
         m.data = message.to_message()
-        self.events.dispatch(*message_to_event('out', m))
-        self.events.dispatch(*message_to_event('both', m))
+        self._events_out.dispatch(*message_to_event('out', m))
 
         m = message
         m.server = self
         name, event = message_to_event('out', m)
-        self.events.dispatch(name, event)
-        name, event = message_to_event('both', m)
-        self.events.dispatch(name, event)
-        self.events.dispatch('girc all out', event)
-        self.events.dispatch('girc all both', event)
+        self._events_out.dispatch(name, event)
+        self._events_out.dispatch('girc all', event)
 
-        self.transport.write(bytes(message.to_message() + '\r\n', 'UTF-8'))
+        self.transport.write(bytes(final_message, 'UTF-8'))
