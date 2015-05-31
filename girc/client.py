@@ -8,7 +8,8 @@ from ircreactor.envelope import RFC1459Message
 
 from .capabilities import Capabilities
 from .features import Features
-from .imapping import IDict, IString
+from .info import Info
+from .imapping import IDict, IList, IString
 from .events import numerics
 
 loop = asyncio.get_event_loop()
@@ -26,12 +27,13 @@ def message_to_event(direction, message):
     # differentiate between private and public messages
     verb = message.verb.lower()
     if verb == 'privmsg':
-        if message.server.is_channel(message.arguments[0]):
+        if message.server.is_channel(message.params[0]):
             verb = 'pubmsg'
 
     # this is the same as ircreactor does
     info = message.__dict__
     info['direction'] = direction
+    info['verb'] = info['verb'].lower()  # we just prefer lowercase
     return 'girc ' + verb, info
 
 
@@ -44,6 +46,12 @@ class ServerConnection(asyncio.Protocol):
         self._events_out = EventManager()
         self._new_data = ''
 
+        # we keep a list of imappable entities for us to set the casemap on
+        #   when ISUPPORT rolls 'round. we assume the server will keep the same
+        #   casemap, so once we've received one we stop keeping track
+        self._casemap_set = False
+        self._imaps = []
+
         # name used for this server, eg: rizon
         self.name = name
 
@@ -53,9 +61,8 @@ class ServerConnection(asyncio.Protocol):
         self.real = real
         self.autojoin_channels = []
 
-        # generated info
-        self.clients = IDict()
-        self.channels = IDict()
+        # generated and state info
+        self.features = Features(self)  # must be done before info
         self.capabilities = Capabilities(wanted=[
             'account-notify',
             'account-tag',
@@ -71,7 +78,8 @@ class ServerConnection(asyncio.Protocol):
             'server-time',
             'userhost-in-names',
         ])
-        self.features = Features(self)
+
+        self.info = Info(self)
 
         # events
         self.register_event('cap', 'both', self.rpl_cap)
@@ -83,27 +91,49 @@ class ServerConnection(asyncio.Protocol):
         self.reactor = reactor
         self.reactor._append_server(self)
 
-    def set_casemapping(self, casemap):
-        casemap = casemap.casefold()
+    # event handling
+    def register_event(self, verb, direction, child_fn, priority=10):
+        event_managers = []
+        if direction in ('in', 'both'):
+            event_managers.append(self._events_in)
+        if direction in ('out', 'both'):
+            event_managers.append(self._events_out)
 
-        self.clients.set_std(casemap)
-        self.channels.set_std(casemap)
+        for event_manager in event_managers:
+            event_manager.register('girc ' + verb, child_fn, priority=priority)
+
+    # casemapping and casemapped objects
+    def set_casemapping(self, casemap):
+        if not self._casemap_set:
+            self._casemap_set = True
+
+            casemap = casemap.casefold()
+
+            for obj in self._imaps:
+                obj.set_std(casemap)
 
     def istring(self, in_string=''):
         new_string = IString(in_string)
-        new_string.set_std(features.get('casemapping'))
+        new_string.set_std(self.features.get('casemapping'))
+        if not self._casemap_set:
+            self._imaps.append(new_string)
         return new_string
+
+    def ilist(self, in_list={}):
+        new_list = IList(in_list)
+        new_list.set_std(self.features.get('casemapping'))
+        if not self._casemap_set:
+            self._imaps.append(new_list)
+        return new_list
 
     def idict(self, in_dict={}):
         new_dict = IDict(in_dict)
-        new_dict.set_std(features.get('casemapping'))
+        new_dict.set_std(self.features.get('casemapping'))
+        if not self._casemap_set:
+            self._imaps.append(new_dict)
         return new_dict
 
-    def is_channel(self, name):
-        if name[0] in self.features.get('chantypes'):
-            return True
-        return False
-
+    # protocol connect / disconnect
     def connection_made(self, transport):
         peername, port = transport.get_extra_info('peername')
         print('Connected to {}'.format(peername))
@@ -111,59 +141,6 @@ class ServerConnection(asyncio.Protocol):
         self.connected = True
 
         self.send('CAP LS', params=['302'])
-
-    def send_welcome(self):
-        self.send('NICK', params=[self.nick])
-        self.send('USER', params=[self.user, '*', '*', self.real])
-
-    def join_channels(self, *channels):
-        if self.ready:
-            for channel in channels:
-                params = []
-
-                if ' ' in channel:
-                    channel, key = channel.split(' ')
-                else:
-                    key = None
-
-                params.append(channel)
-                if key:
-                    params.append(key)
-
-                self.send('JOIN', params=[channel, key])
-        else:
-            self.autojoin_channels = channels
-
-    def rpl_cap(self, info):
-        if info['direction'] == 'in':
-            clientname = info['params'].pop(0)
-        subcmd = info['params'].pop(0).casefold()
-
-        self.capabilities.ingest(subcmd, info['params'])
-
-        if self.ready:
-            return
-
-        if subcmd == 'ls':
-            caps_to_enable = self.capabilities.to_enable
-            self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
-        elif subcmd == 'ack':
-            self.send('CAP', params=['END'])
-            self.send_welcome()
-
-    def rpl_features(self, info):
-        # last param is 'are supported by this server' text, so we ignore it
-        self.features.ingest(*info['params'][:-1])
-
-    def rpl_endofmotd(self, info):
-        if not self.ready:
-            self.ready = True
-
-            if self.autojoin_channels:
-                self.join_channels(*self.autojoin_channels)
-
-    def rpl_ping(self, info):
-        self.send('PONG', params=info['params'])
 
     def connection_lost(self, exc):
         if not self.connected:
@@ -173,6 +150,27 @@ class ServerConnection(asyncio.Protocol):
             print('Connection error: {}'.format(exc))
             return
         print('Connection closed')
+
+    # protocol send / receive
+    def send(self, verb, params=None, source=None, tags=None):
+        m = RFC1459Message.from_data(verb, params=params, source=source, tags=tags)
+        self._send_message(m)
+
+    def _send_message(self, message):
+        final_message = message.to_message() + '\r\n'
+
+        m = RFC1459Message.from_data('raw')
+        m.server = self
+        m.data = message.to_message()
+        self._events_out.dispatch(*message_to_event('out', m))
+
+        m = message
+        m.server = self
+        name, event = message_to_event('out', m)
+        self._events_out.dispatch(name, event)
+        self._events_out.dispatch('girc all', event)
+
+        self.transport.write(bytes(final_message, 'UTF-8'))
 
     def data_received(self, data):
         # feed in new data from server
@@ -204,32 +202,65 @@ class ServerConnection(asyncio.Protocol):
             self._events_in.dispatch(name, event)
             self._events_in.dispatch('girc all', event)
 
-    def register_event(self, verb, direction, child_fn, priority=10):
-        event_managers = []
-        if direction in ('in', 'both'):
-            event_managers.append(self._events_in)
-        if direction in ('out', 'both'):
-            event_managers.append(self._events_out)
+    # default events
+    def rpl_cap(self, info):
+        if info['direction'] == 'in':
+            clientname = info['params'].pop(0)
+        subcmd = info['params'].pop(0).casefold()
 
-        for event_manager in event_managers:
-            event_manager.register('girc ' + verb, child_fn, priority=priority)
+        self.capabilities.ingest(subcmd, info['params'])
 
-    def send(self, verb, params=None, source=None, tags=None):
-        m = RFC1459Message.from_data(verb, params=params, source=source, tags=tags)
-        self._send_message(m)
+        if self.ready:
+            return
 
-    def _send_message(self, message):
-        final_message = message.to_message() + '\r\n'
+        if subcmd == 'ls':
+            caps_to_enable = self.capabilities.to_enable
+            self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
+        elif subcmd == 'ack':
+            self.send('CAP', params=['END'])
+            self.send_welcome()
 
-        m = RFC1459Message.from_data('raw')
-        m.server = self
-        m.data = message.to_message()
-        self._events_out.dispatch(*message_to_event('out', m))
+    def send_welcome(self):
+        self.send('NICK', params=[self.nick])
+        self.send('USER', params=[self.user, '*', '*', self.real])
 
-        m = message
-        m.server = self
-        name, event = message_to_event('out', m)
-        self._events_out.dispatch(name, event)
-        self._events_out.dispatch('girc all', event)
+    def rpl_features(self, info):
+        # last param is 'are supported by this server' text, so we ignore it
+        self.features.ingest(*info['params'][:-1])
 
-        self.transport.write(bytes(final_message, 'UTF-8'))
+    def rpl_endofmotd(self, info):
+        if not self.ready:
+            self.ready = True
+
+            if self.autojoin_channels:
+                self.join_channels(*self.autojoin_channels)
+
+    def rpl_ping(self, info):
+        self.send('PONG', params=info['params'])
+
+    # convenience
+    def is_channel(self, name):
+        if name[0] in self.features.get('chantypes'):
+            return True
+        return False
+
+    # commands
+    def join_channels(self, *channels):
+        # we schedule joining for later
+        if not self.ready:
+            self.autojoin_channels = channels
+            return True
+
+        for channel in channels:
+            params = []
+
+            if ' ' in channel:
+                channel, key = channel.split(' ')
+            else:
+                key = None
+
+            params.append(channel)
+            if key:
+                params.append(key)
+
+            self.send('JOIN', params=[channel, key])

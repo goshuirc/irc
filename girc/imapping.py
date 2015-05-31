@@ -4,13 +4,8 @@
 import collections
 
 
-class IDict(collections.MutableMapping):
-    """Case-insensitive IRC dict, based on IRC casemapping standards."""
-    def __init__(self, std='ascii', *args, **kwargs):
-        self.store = dict()
-        self.set_std(std)
-        self.update(dict(*args, **kwargs))  # use the free update to set keys
-
+class IMap:
+    """Base object for supporting IRC casemapping."""
     def set_std(self, std):
         """Set the standard we'll be using (isupport CASEMAPPING)."""
         # translation based on std
@@ -37,8 +32,20 @@ class IDict(collections.MutableMapping):
         if self._upper_chars:
             self._upper_trans = str.maketrans(self._upper_chars, self._lower_chars)
 
-    def __json__(self):
+
+class IDict(collections.MutableMapping, IMap):
+    """Case-insensitive IRC dict, based on IRC casemapping standards."""
+    def __init__(self, data={}, *args, **kwargs):
+        self.store = dict()
+        self.update(data)
+        self.update(dict(*args, **kwargs))  # use the free update to set keys
+
+    @property
+    def json(self):
         return self.store
+
+    def __repr__(self):
+        return str(self.store)
 
     def __getitem__(self, key):
         return self.store[self.__keytransform__(key)]
@@ -56,7 +63,7 @@ class IDict(collections.MutableMapping):
         return len(self.store)
 
     def __keytransform__(self, key):
-        if self._lower_trans is not None:
+        if isinstance(key, str) and self._lower_trans is not None:
             key = key.translate(self._lower_trans)
         return key.lower()
 
@@ -67,35 +74,61 @@ class IDict(collections.MutableMapping):
         return new_dict
 
 
-class IString(str):
+class IList(collections.MutableSequence, IMap):
+    """Case-insensitive IRC list, based on IRC casemapping standards."""
+    def __init__(self, data=[], *args, **kwargs):
+        self.store = list()
+        self.update(data)
+        self.update(dict(*args, **kwargs))  # use the free update to set keys
+
+    @property
+    def json(self):
+        return self.store
+
+    def __repr__(self):
+        return str(self.store)
+
+    def __valuetransform__(self, value):
+        # XXX - could also simply make them IStrings
+        #   or do some more complex processing on them below...
+        if isinstance(value, str) and self._lower_trans is not None:
+            value = value.translate(self._lower_trans)
+        return value.lower()
+
+    def __setitem__(self, index, value):
+        value = self.__valuetransform__(value)
+        self.store[index] = value
+
+    def append(self, value):
+        value = self.__valuetransform__(value)
+        self.store.append(value)
+
+    def clear(self):
+        del self.store
+        self.store = []
+
+    def extend(self, values):
+        for value in values:
+            value = self.__valuetransform__(value)
+            self.store.append(value)
+
+    def insert(self, index, value):
+        value = self.__valuetransform__(value)
+        self.store.insert(index, value)
+
+    def pop(self, index=-1):
+        return self.store.pop(index)
+
+    def remove(self, value):
+        value = self.__valuetransform__(value)
+        self.store.remove(value)
+
+    def reverse(self):
+        self.store.reverse()
+
+
+class IString(str, IMap):
     """Case-insensitive IRC string (for channel/usernames), based on IRC casemapping standards."""
-    # setting info
-    def set_std(self, std):
-        """Set the standard we'll be using (isupport CASEMAPPING)."""
-        # translation based on std
-        self._lower_chars = None
-        self._upper_chars = None
-
-        self._lower_trans = None
-        self._upper_trans = None
-
-        self._std = std.lower()
-
-        if self._std == 'ascii':
-            pass
-        elif self._std == 'rfc1459':
-            self._lower_chars = ''.join(chr(i) for i in range(91, 95))
-            self._upper_chars = ''.join(chr(i) for i in range(123, 127))
-
-        elif self._std == 'rfc1459-strict':
-            self._lower_chars = ''.join(chr(i) for i in range(91, 94))
-            self._upper_chars = ''.join(chr(i) for i in range(123, 126))
-
-        if self._lower_chars:
-            self._lower_trans = str.maketrans(self._lower_chars, self._upper_chars)
-        if self._upper_chars:
-            self._upper_trans = str.maketrans(self._upper_chars, self._lower_chars)
-
     # upperlower
     def lower(self):
         new_string = IString(self._irc_lower(self))

@@ -18,10 +18,14 @@ class Features:
     """Ingests sets of ISUPPORT features and provides access to them."""
     def __init__(self, server_connection):
         self.available = CaseInsensitiveDict()
-        self.server_connection = server_connection
+        self.s = server_connection
 
         # RFC1459 basics
-        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'CASEMAPPING=rfc1459')
+        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#')
+
+        # casemapping is a special case
+        # we want to avoid calling set_casemapping below
+        self.available['casemapping'] = 'rfc1459'
 
     def ingest(self, *parameters):
         for feature in parameters:
@@ -72,7 +76,7 @@ class Features:
 
                 # because server sets casemapping
                 if feature == 'casemapping':
-                    self.server_connection.set_casemapping(value)
+                    self.s.set_casemapping(value)
 
     def get(self, key, default=None):
         return self.available.get(key, default)
