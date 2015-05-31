@@ -13,35 +13,59 @@ loop = asyncio.get_event_loop()
 class Reactor:
     """Manages IRC connections."""
     def __init__(self):
-        self.autojoin_channels = CaseInsensitiveDict()
         self.servers = CaseInsensitiveDict()
+        self._connect_info = CaseInsensitiveDict()
         self._event_handlers = {}
 
-    def connect_to_server(self, server_name, *args, nick=None, user='', **kwargs):
-        if nick is None:
-            raise Exception('nick must be passed to connect_to_server')
+    # start and stop
+    def start(self):
+        loop.run_forever()
 
-        connection = loop.create_connection(functools.partial(ServerConnection, name=server_name, reactor=self, nick=nick, user=user), *args, **kwargs)
+    def close(self):
+        loop.close()
+
+    # servers
+    def connect_to_server(self, server_name, *args, **kwargs):
+        self._connect_info[server_name] = {}
+
+        connection = loop.create_connection(functools.partial(ServerConnection, name=server_name, reactor=self), *args, **kwargs)
         t = asyncio.Task(connection)
-
-    def join_channels(self, server_name, *chans):
-        server_name = server_name.casefold()
-        if server_name in self.servers:
-            self.servers[server_name].join_channels(*chans)
-        else:
-            # server will pickup list when they exist
-            self.autojoin_channels[server_name] = chans
 
     def _append_server(self, server):
         self.servers[server.name] = server
 
+        # register cached events
         for verb, infos in self._event_handlers.items():
             for info in infos:
                 server.register_event(verb, info['direction'], info['handler'], priority=info['priority'])
 
-        if server.name in self.autojoin_channels:
-            server.join_channels(*self.autojoin_channels[server.name])
+        # setting connect info
+        info = self._connect_info[server.name]
 
+        if 'user_info' in info:
+            args, kwargs = info['user_info']
+            self.set_user_info(server.name, *args, **kwargs)
+
+        if 'autojoin_channels' in info:
+            chans = info['autojoin_channels']
+            self.join_channels(server.name, *chans)
+
+    # setting connection info
+    def set_user_info(self, server_name, *args, **kwargs):
+        if server_name in self.servers:
+            self.servers[server_name].set_user_info(*args, **kwargs)
+        else:
+            # server will pickup list when they exist
+            self._connect_info[server_name]['user_info'] = [args, kwargs]
+
+    def join_channels(self, server_name, *chans):
+        if server_name in self.servers:
+            self.servers[server_name].join_channels(*chans)
+        else:
+            # server will pickup list when they exist
+            self._connect_info[server_name]['autojoin_channels'] = chans
+
+    # events
     def handler(self, verb, direction='in', priority=10):
         def parent_fn(func):
             @functools.wraps(func)
@@ -63,9 +87,3 @@ class Reactor:
 
         for name, server in self.servers.items():
             server.register_event(verb, child_fn, direction=direction, priority=priority)
-
-    def start(self):
-        loop.run_forever()
-
-    def close(self):
-        loop.close()

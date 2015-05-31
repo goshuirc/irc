@@ -45,7 +45,7 @@ def message_to_event(direction, message):
 
 
 class ServerConnection(asyncio.Protocol):
-    def __init__(self, name=None, reactor=None, nick=None, user=None, real='*'):
+    def __init__(self, name=None, reactor=None):
         self.connected = False
         self.ready = False
         self._events_in = EventManager()
@@ -62,9 +62,9 @@ class ServerConnection(asyncio.Protocol):
         self.name = name
 
         # client info
-        self.nick = nick
-        self.user = user
-        self.real = real
+        self.nick = None
+        self.user = None
+        self.real = None
         self.autojoin_channels = []
 
         # generated and state info
@@ -96,6 +96,11 @@ class ServerConnection(asyncio.Protocol):
 
         self.reactor = reactor
         self.reactor._append_server(self)
+
+    def set_user_info(self, nick, user='*', real='*'):
+        self.nick = nick
+        self.user = user
+        self.real = real
 
     # event handling
     def register_event(self, verb, direction, child_fn, priority=10):
@@ -141,6 +146,11 @@ class ServerConnection(asyncio.Protocol):
 
     # protocol connect / disconnect
     def connection_made(self, transport):
+        if not self.nick:
+            raise Exception('Nick not found. User info must be set with set_user_info() before connecting')
+            self.exit()
+            return
+
         peername, port = transport.get_extra_info('peername')
         print('Connected to {}'.format(peername))
         self.transport = transport
