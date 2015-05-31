@@ -16,12 +16,12 @@ class Info:
         # event handlers
         self.s.register_event('all', 'in', self.update_info)
 
-    def update_info(self, info):
-        if info['verb'] == 'join':
-            user = NickMask(info['source'])
-            channels = info['params'][0].split(',')
+    def update_info(self, event):
+        if event['verb'] == 'join':
+            user = NickMask(event['source'])
+            channels = event['params'][0].split(',')
 
-            self.create_user(info['source'])
+            self.create_user(event['source'])
             self.create_channels(*channels)
 
             for chan in channels:
@@ -32,8 +32,8 @@ class Info:
                     self.channels[chan]['users'][user.nick] = {}
 
         # debug info dumping
-        if info['verb'] in ['privmsg', 'pubmsg']:
-            if info['message'].startswith('info'):
+        if event['verb'] in ['privmsg', 'pubmsg']:
+            if event['message'].startswith('info'):
                 from pprint import pprint
                 pprint(self.json)
 

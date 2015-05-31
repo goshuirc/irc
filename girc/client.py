@@ -209,12 +209,12 @@ class ServerConnection(asyncio.Protocol):
             self._events_in.dispatch('girc all', event)
 
     # default events
-    def rpl_cap(self, info):
-        if info['direction'] == 'in':
-            clientname = info['params'].pop(0)
-        subcmd = info['params'].pop(0).casefold()
+    def rpl_cap(self, event):
+        if event['direction'] == 'in':
+            clientname = event['params'].pop(0)
+        subcmd = event['params'].pop(0).casefold()
 
-        self.capabilities.ingest(subcmd, info['params'])
+        self.capabilities.ingest(subcmd, event['params'])
 
         if self.ready:
             return
@@ -230,19 +230,19 @@ class ServerConnection(asyncio.Protocol):
         self.send('NICK', params=[self.nick])
         self.send('USER', params=[self.user, '*', '*', self.real])
 
-    def rpl_features(self, info):
+    def rpl_features(self, event):
         # last param is 'are supported by this server' text, so we ignore it
-        self.features.ingest(*info['params'][:-1])
+        self.features.ingest(*event['params'][:-1])
 
-    def rpl_endofmotd(self, info):
+    def rpl_endofmotd(self, event):
         if not self.ready:
             self.ready = True
 
             if self.autojoin_channels:
                 self.join_channels(*self.autojoin_channels)
 
-    def rpl_ping(self, info):
-        self.send('PONG', params=info['params'])
+    def rpl_ping(self, event):
+        self.send('PONG', params=event['params'])
 
     # convenience
     def is_channel(self, name):

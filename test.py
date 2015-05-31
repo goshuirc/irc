@@ -9,17 +9,17 @@ reactor.connect_to_server('local', '127.0.0.1', 6667, nick='goshu', user='n')
 reactor.join_channels('local', '#services', '#a', '#testchan')
 
 @reactor.handler('raw', direction='in', priority=1)
-def handle_raw_in(info):
-    print(info['server'].name, ' ->', info['data'])
+def handle_raw_in(event):
+    print(event['server'].name, ' ->', event['data'])
 
 @reactor.handler('raw', direction='out', priority=1)
-def handle_raw_out(info):
-    print(info['server'].name, '<- ', info['data'])
+def handle_raw_out(event):
+    print(event['server'].name, '<- ', event['data'])
 
 @reactor.handler('pubmsg')
 @reactor.handler('privmsg')
-def handle_hi(info):
-    if info['message'].lower().startswith('hi'):
+def handle_hi(event):
+    if event['message'].lower().startswith('hi'):
         print('Hi!')
 
 print('Connecting')
