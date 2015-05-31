@@ -6,6 +6,10 @@ import collections
 
 class IMap:
     """Base object for supporting IRC casemapping."""
+    def __init__(self):
+        # default to 1459
+        self.set_std('rfc1459')
+
     def set_std(self, std):
         """Set the standard we'll be using (isupport CASEMAPPING)."""
         # translation based on std
@@ -37,6 +41,7 @@ class IDict(collections.MutableMapping, IMap):
     """Case-insensitive IRC dict, based on IRC casemapping standards."""
     def __init__(self, data={}, *args, **kwargs):
         self.store = dict()
+        IMap.__init__(self)
         self.update(data)
         self.update(dict(*args, **kwargs))  # use the free update to set keys
 
@@ -78,6 +83,7 @@ class IList(collections.MutableSequence, IMap):
     """Case-insensitive IRC list, based on IRC casemapping standards."""
     def __init__(self, data=[], *args):
         self.store = list()
+        IMap.__init__(self)
         self.extend(data)
         self.extend(dict(*args))
 
@@ -117,9 +123,12 @@ class IList(collections.MutableSequence, IMap):
         self.store = []
 
     def extend(self, values):
-        for value in values:
-            value = self.__valuetransform__(value)
-            self.store.append(value)
+        if isinstance(values, (list, tuple)):
+            for value in values:
+                value = self.__valuetransform__(value)
+                self.store.append(value)
+        else:
+            self.store += self.__valuetransform__(values)
 
     def insert(self, index, value):
         value = self.__valuetransform__(value)

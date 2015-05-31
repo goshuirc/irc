@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .types import User, Channel
 from .utils import NickMask
 
 
@@ -25,11 +26,11 @@ class Info:
             self.create_channels(*channels)
 
             for chan in channels:
-                if chan not in self.users[user.nick]['channels']:
-                    self.users[user.nick]['channels'].append(chan)
+                if chan not in self.users[user.nick].channels:
+                    self.users[user.nick].channels.append(chan)
 
-                if user.nick not in self.channels[chan]['users']:
-                    self.channels[chan]['users'][user.nick] = {}
+                if user.nick not in self.channels[chan].users:
+                    self.channels[chan].users[user.nick] = {}
 
         # debug info dumping
         if event['verb'] in ['privmsg', 'pubmsg']:
@@ -41,25 +42,20 @@ class Info:
         user = NickMask(userhost)
 
         if user.nick not in self.users:
-            self.users[user.nick] = {
-                'channels': self.s.ilist(),
-                'modes': {},
-            }
+            self.users[user.nick] = User(self.s, userhost)
 
         # XXX - rewriting these every time...
         #   do we wanna check if they're the same before we do the writes?
-        self.users[user.nick]['nick'] = user.nick
+        self.users[user.nick].nick = user.nick
         if user.user:
-            self.users[user.nick]['user'] = user.user
+            self.users[user.nick].user = user.user
         if user.host:
-            self.users[user.nick]['host'] = user.host
+            self.users[user.nick].host = user.host
 
     def create_channels(self, *channels):
         for channel in channels:
             if channel not in self.channels:
-                self.channels[channel] = {
-                    'users': self.s.idict(),
-                }
+                self.channels[channel] = Channel(self.s, channel)
 
     @property
     def json(self):
