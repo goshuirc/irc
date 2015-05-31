@@ -16,6 +16,12 @@ def handle_raw_in(info):
 def handle_raw_out(info):
     print(info['server'].name, '<- ', info['data'])
 
+@reactor.handler('pubmsg')
+@reactor.handler('privmsg')
+def handle_hi(info):
+    if info['message'].lower().startswith('hi'):
+        print('Hi!')
+
 print('Connecting')
 try:
     reactor.start()
