@@ -119,7 +119,7 @@ class ServerConnection(asyncio.Protocol):
             self._imaps.append(new_string)
         return new_string
 
-    def ilist(self, in_list={}):
+    def ilist(self, in_list=[]):
         new_list = IList(in_list)
         new_list.set_std(self.features.get('casemapping'))
         if not self._casemap_set:

@@ -76,10 +76,10 @@ class IDict(collections.MutableMapping, IMap):
 
 class IList(collections.MutableSequence, IMap):
     """Case-insensitive IRC list, based on IRC casemapping standards."""
-    def __init__(self, data=[], *args, **kwargs):
+    def __init__(self, data=[], *args):
         self.store = list()
-        self.update(data)
-        self.update(dict(*args, **kwargs))  # use the free update to set keys
+        self.extend(data)
+        self.extend(dict(*args))
 
     @property
     def json(self):
@@ -92,12 +92,21 @@ class IList(collections.MutableSequence, IMap):
         # XXX - could also simply make them IStrings
         #   or do some more complex processing on them below...
         if isinstance(value, str) and self._lower_trans is not None:
-            value = value.translate(self._lower_trans)
-        return value.lower()
+            value = value.translate(self._lower_trans).lower()
+        return value
+
+    def __getitem__(self, index):
+        return self.store[index]
 
     def __setitem__(self, index, value):
         value = self.__valuetransform__(value)
         self.store[index] = value
+
+    def __delitem__(self, index):
+        del self.store[index]
+
+    def __len__(self):
+        return len(self.store)
 
     def append(self, value):
         value = self.__valuetransform__(value)

@@ -19,11 +19,17 @@ class Info:
     def update_info(self, info):
         if info['verb'] == 'join':
             user = NickMask(info['source'])
+            channels = info['params'][0].split(',')
 
             self.create_user(info['source'])
-            self.create_channels(*info['params'][0].split(','))
+            self.create_channels(*channels)
 
-            self.users[user.nick]['channels']
+            for chan in channels:
+                if chan not in self.users[user.nick]['channels']:
+                    self.users[user.nick]['channels'].append(chan)
+
+                if user.nick not in self.channels[chan]['users']:
+                    self.channels[chan]['users'][user.nick] = {}
         elif info['verb'] in ['privmsg', 'pubmsg']:
             from pprint import pprint
             pprint(self.json)
@@ -33,7 +39,7 @@ class Info:
 
         if user.nick not in self.users:
             self.users[user.nick] = {
-                'channels': [],  # ilist?
+                'channels': self.s.ilist(),
                 'modes': {},
             }
 
@@ -48,7 +54,9 @@ class Info:
     def create_channels(self, *channels):
         for channel in channels:
             if channel not in self.channels:
-                self.channels[channel] = {}
+                self.channels[channel] = {
+                    'users': self.s.idict(),
+                }
 
     @property
     def json(self):
