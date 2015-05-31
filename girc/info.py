@@ -30,9 +30,12 @@ class Info:
 
                 if user.nick not in self.channels[chan]['users']:
                     self.channels[chan]['users'][user.nick] = {}
-        elif info['verb'] in ['privmsg', 'pubmsg']:
-            from pprint import pprint
-            pprint(self.json)
+
+        # debug info dumping
+        if info['verb'] in ['privmsg', 'pubmsg']:
+            if info['message'].startswith('info'):
+                from pprint import pprint
+                pprint(self.json)
 
     def create_user(self, userhost):
         user = NickMask(userhost)

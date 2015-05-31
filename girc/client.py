@@ -33,7 +33,13 @@ def message_to_event(direction, message):
     # this is the same as ircreactor does
     info = message.__dict__
     info['direction'] = direction
-    info['verb'] = info['verb'].lower()  # we just prefer lowercase
+    info['verb'] = verb
+
+    # custom message attributes
+    if verb in ['privmsg', 'pubmsg']:
+        info['target'] = info['params'][0]
+        info['message'] = info['params'][1]
+
     return 'girc ' + verb, info
 
 
