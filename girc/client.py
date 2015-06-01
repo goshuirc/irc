@@ -10,37 +10,9 @@ from .capabilities import Capabilities
 from .features import Features
 from .info import Info
 from .imapping import IDict, IList, IString
-from .events import numerics
+from .events import numerics, message_to_event
 
 loop = asyncio.get_event_loop()
-
-
-def message_to_event(direction, message):
-    """Prepare an ``RFC1459Message`` for event dispatch.
-
-    We do this because we have to handle special things as well.
-    """
-    # change numerics into nice names
-    if message.verb in numerics:
-        message.verb = numerics[message.verb]
-
-    # differentiate between private and public messages
-    verb = message.verb.lower()
-    if verb == 'privmsg':
-        if message.server.is_channel(message.params[0]):
-            verb = 'pubmsg'
-
-    # this is the same as ircreactor does
-    info = message.__dict__
-    info['direction'] = direction
-    info['verb'] = verb
-
-    # custom message attributes
-    if verb in ['privmsg', 'pubmsg']:
-        info['target'] = info['params'][0]
-        info['message'] = info['params'][1]
-
-    return 'girc ' + verb, info
 
 
 
@@ -50,6 +22,7 @@ class ServerConnection(asyncio.Protocol):
         self.ready = False
         self._events_in = EventManager()
         self._events_out = EventManager()
+        self._girc_events = EventManager()
         self._new_data = ''
 
         # we keep a list of imappable entities for us to set the casemap on
@@ -88,11 +61,11 @@ class ServerConnection(asyncio.Protocol):
         self.info = Info(self)
 
         # events
-        self.register_event('cap', 'both', self.rpl_cap)
-        self.register_event('features', 'both', self.rpl_features)
-        self.register_event('endofmotd', 'both', self.rpl_endofmotd)
-        self.register_event('nomotd', 'both', self.rpl_endofmotd)
-        self.register_event('ping', 'both', self.rpl_ping)
+        self.register_event('both', 'cap', self.rpl_cap)
+        self.register_event('both', 'features', self.rpl_features)
+        self.register_event('both', 'endofmotd', self.rpl_endofmotd)
+        self.register_event('both', 'nomotd', self.rpl_endofmotd)
+        self.register_event('both', 'ping', self.rpl_ping)
 
         self.reactor = reactor
         self.reactor._append_server(self)
@@ -103,15 +76,17 @@ class ServerConnection(asyncio.Protocol):
         self.real = real
 
     # event handling
-    def register_event(self, verb, direction, child_fn, priority=10):
+    def register_event(self, direction, verb, child_fn, priority=10):
         event_managers = []
         if direction in ('in', 'both'):
             event_managers.append(self._events_in)
         if direction in ('out', 'both'):
             event_managers.append(self._events_out)
+        if direction == 'girc':
+            event_managers.append(self._girc_events)
 
         for event_manager in event_managers:
-            event_manager.register('girc ' + verb, child_fn, priority=priority)
+            event_manager.register(verb, child_fn, priority=priority)
 
     # casemapping and casemapped objects
     def set_casemapping(self, casemap):
@@ -184,7 +159,7 @@ class ServerConnection(asyncio.Protocol):
         m.server = self
         name, event = message_to_event('out', m)
         self._events_out.dispatch(name, event)
-        self._events_out.dispatch('girc all', event)
+        self._events_out.dispatch('all', event)
 
         self.transport.write(bytes(final_message, 'UTF-8'))
 
@@ -216,7 +191,7 @@ class ServerConnection(asyncio.Protocol):
             m.server = self
             name, event = message_to_event('in', m)
             self._events_in.dispatch(name, event)
-            self._events_in.dispatch('girc all', event)
+            self._events_in.dispatch('all', event)
 
     # default events
     def rpl_cap(self, event):

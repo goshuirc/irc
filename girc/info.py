@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .events import message_to_event
 from .types import User, Channel
 from .utils import NickMask
 
@@ -42,7 +43,12 @@ class Info:
         user = NickMask(userhost)
 
         if user.nick not in self.users:
-            self.users[user.nick] = User(self.s, userhost)
+            new_user = User(self.s, userhost)
+            self.users[user.nick] = new_user
+            self.s._girc_events.dispatch('create user', {
+                'server': self.s,
+                'user': new_user,
+            })
 
         # XXX - rewriting these every time...
         #   do we wanna check if they're the same before we do the writes?
@@ -55,7 +61,12 @@ class Info:
     def create_channels(self, *channels):
         for channel in channels:
             if channel not in self.channels:
-                self.channels[channel] = Channel(self.s, channel)
+                new_channel = Channel(self.s, channel)
+                self.channels[channel] = new_channel
+                self.s._girc_events.dispatch('create channel', {
+                    'server': self.s,
+                    'channel': new_channel,
+                })
 
     @property
     def json(self):

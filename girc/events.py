@@ -2,6 +2,35 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 
+
+def message_to_event(direction, message):
+    """Prepare an ``RFC1459Message`` for event dispatch.
+
+    We do this because we have to handle special things as well.
+    """
+    # change numerics into nice names
+    if message.verb in numerics:
+        message.verb = numerics[message.verb]
+
+    # differentiate between private and public messages
+    verb = message.verb.lower()
+    if verb == 'privmsg':
+        if message.server.is_channel(message.params[0]):
+            verb = 'pubmsg'
+
+    # this is the same as ircreactor does
+    info = message.__dict__
+    info['direction'] = direction
+    info['verb'] = verb
+
+    # custom message attributes
+    if verb in ['privmsg', 'pubmsg']:
+        info['target'] = info['params'][0]
+        info['message'] = info['params'][1]
+
+    return verb, info
+
+
 # list adapted from https://www.alien.net.au/irc/irc2numerics.html
 # probably insane stuff in here, and stuff that's not implemented in anything really
 numerics = {
