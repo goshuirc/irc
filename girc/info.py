@@ -16,7 +16,7 @@ class Info:
         self.channels = self.s.idict()
 
         # event handlers
-        self.s.register_event('all', 'in', self.update_info)
+        self.s.register_event('in', 'all', self.update_info)
 
     def update_info(self, event):
         if event['verb'] == 'join':

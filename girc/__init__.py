@@ -37,7 +37,7 @@ class Reactor:
         # register cached events
         for verb, infos in self._event_handlers.items():
             for info in infos:
-                server.register_event(verb, info['direction'], info['handler'], priority=info['priority'])
+                server.register_event(info['direction'], verb, info['handler'], priority=info['priority'])
 
         # setting connect info
         info = self._connect_info[server.name]
