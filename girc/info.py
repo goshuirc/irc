@@ -20,7 +20,7 @@ class Info:
 
     def update_info(self, event):
         if event['verb'] == 'join':
-            user = NickMask(event['source'])
+            user = event['source']
             channels = event['params'][0].split(',')
 
             self.create_user(event['source'])
@@ -40,6 +40,9 @@ class Info:
                 pprint(self.json)
 
     def create_user(self, userhost):
+        if isinstance(userhost, User):
+            return
+
         user = NickMask(userhost)
 
         if user.nick not in self.users:
@@ -58,8 +61,13 @@ class Info:
         if user.host:
             self.users[user.nick].host = user.host
 
+    def create_channel(self, channel):
+        self.create_channels(channel)
+
     def create_channels(self, *channels):
         for channel in channels:
+            if isinstance(channel, Channel):
+                continue
             if channel not in self.channels:
                 new_channel = Channel(self.s, channel)
                 self.channels[channel] = new_channel

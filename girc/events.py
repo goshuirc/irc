@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .utils import NickMask
 
 
 def message_to_event(direction, message):
@@ -8,6 +9,8 @@ def message_to_event(direction, message):
 
     We do this because we have to handle special things as well.
     """
+    server = message.server
+
     # change numerics into nice names
     if message.verb in numerics:
         message.verb = numerics[message.verb]
@@ -15,7 +18,7 @@ def message_to_event(direction, message):
     # differentiate between private and public messages
     verb = message.verb.lower()
     if verb == 'privmsg':
-        if message.server.is_channel(message.params[0]):
+        if server.is_channel(message.params[0]):
             verb = 'pubmsg'
 
     # this is the same as ircreactor does
@@ -27,6 +30,16 @@ def message_to_event(direction, message):
     if verb in ['privmsg', 'pubmsg']:
         info['target'] = info['params'][0]
         info['message'] = info['params'][1]
+
+    for attr in ['source', 'target']:
+        if attr in info and info[attr]:
+            source = info[attr]
+            if server.is_nick(source):
+                server.info.create_user(source)
+                info[attr] = server.info.users[NickMask(source).nick]
+            elif server.is_channel(source):
+                server.info.create_channel(source)
+                info[attr] = server.info.channels[source]
 
     return verb, info
 

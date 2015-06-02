@@ -8,6 +8,7 @@ from ircreactor.envelope import RFC1459Message
 
 from .capabilities import Capabilities
 from .features import Features
+from .formatting import escape, unescape
 from .info import Info
 from .imapping import IDict, IList, IString
 from .events import numerics, message_to_event
@@ -193,6 +194,14 @@ class ServerConnection(asyncio.Protocol):
             self._events_in.dispatch(name, event)
             self._events_in.dispatch('all', event)
 
+    # commands
+    def msg(self, target, message, formatted=True, tags=None):
+        """Message the given target."""
+        if formatted:
+            message = unescape(message)
+
+        self.send('PRIVMSG', params=[target, message], source=self.nick, tags=None)
+
     # default events
     def rpl_cap(self, event):
         if event['direction'] == 'in':
@@ -234,6 +243,10 @@ class ServerConnection(asyncio.Protocol):
         if name[0] in self.features.get('chantypes'):
             return True
         return False
+
+    def is_nick(self, name):
+        # XXX - lazy for now, to check ISUPPORT etc
+        return not self.is_channel(name)
 
     # commands
     def join_channels(self, *channels):

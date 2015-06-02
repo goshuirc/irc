@@ -22,6 +22,7 @@ class User(ServerConnected):
 
         self.channels = []
 
+    # properties
     @property
     def channels(self):
         chanlist = []
@@ -34,6 +35,18 @@ class User(ServerConnected):
     @channels.setter
     def channels(self, chanlist):
         self._channels = self.s.ilist(chanlist)
+
+    @property
+    def userhost(self):
+        return '{}@{}'.format(self.user, self.host)
+
+    @property
+    def nickmask(self):
+        return '{}!{}@{}'.format(self.nick, self.user, self.host)
+
+    # commands
+    def msg(self, message, formatted=True, tags=None):
+        self.s.msg(self.nick, message, formatted=formatted, tags=tags)
     
 
 class Channel(ServerConnected):

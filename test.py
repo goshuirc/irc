@@ -21,7 +21,7 @@ def handle_raw_out(event):
 @reactor.handler('in', 'privmsg')
 def handle_hi(event):
     if event['message'].lower().startswith('hi'):
-        print('Hi!')
+        event['source'].msg('Hi!')
 
 print('Connecting')
 try:
