@@ -33,7 +33,7 @@ class Info:
                 if user.nick not in self.channels[chan].users:
                     self.channels[chan].users[user.nick] = {}
 
-        # debug info dumping
+        # XXX - debug info dumping
         if event['verb'] in ['privmsg', 'pubmsg']:
             if event['message'].startswith('info'):
                 from pprint import pprint
