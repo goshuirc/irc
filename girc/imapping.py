@@ -23,6 +23,7 @@ class IMap:
 
         if self._std == 'ascii':
             pass
+
         elif self._std == 'rfc1459':
             self._lower_chars = ''.join(chr(i) for i in range(91, 95))
             self._upper_chars = ''.join(chr(i) for i in range(123, 127))
@@ -31,10 +32,21 @@ class IMap:
             self._lower_chars = ''.join(chr(i) for i in range(91, 94))
             self._upper_chars = ''.join(chr(i) for i in range(123, 126))
 
+        elif self._std == 'rfc3454':
+            ...
+
         if self._lower_chars:
             self._lower_trans = str.maketrans(self._lower_chars, self._upper_chars)
         if self._upper_chars:
             self._upper_trans = str.maketrans(self._upper_chars, self._lower_chars)
+
+    def _translate(self, value):
+        if self._std == 'rfc3454':
+            # python's casefold does nameprep, so just use that
+            return value.casefold()
+
+        if self._lower_trans is not None:
+            return value.translate(self._lower_trans)
 
 
 class IDict(collections.MutableMapping, IMap):
@@ -68,8 +80,8 @@ class IDict(collections.MutableMapping, IMap):
         return len(self.store)
 
     def __keytransform__(self, key):
-        if isinstance(key, str) and self._lower_trans is not None:
-            key = key.translate(self._lower_trans)
+        if isinstance(key, str):
+            key = self._translate(key)
         return key.lower()
 
     def copy(self):
@@ -97,8 +109,8 @@ class IList(collections.MutableSequence, IMap):
     def __valuetransform__(self, value):
         # XXX - could also simply make them IStrings
         #   or do some more complex processing on them below...
-        if isinstance(value, str) and self._lower_trans is not None:
-            value = value.translate(self._lower_trans).lower()
+        if isinstance(value, str):
+            value = self._translate(value)
         return value
 
     def __getitem__(self, index):
@@ -160,14 +172,14 @@ class IString(str, IMap):
 
     def _irc_lower(self, in_string):
         """Convert us to our lower-case equivalent, given our std."""
-        conv_string = in_string
+        conv_string = self._translate(in_string)
         if self._lower_trans is not None:
             conv_string = conv_string.translate(self._lower_trans)
         return str.lower(conv_string)
 
     def _irc_upper(self, in_string):
         """Convert us to our upper-case equivalent, given our std."""
-        conv_string = in_string
+        conv_string = self._translate(in_string)
         if self._upper_trans is not None:
             conv_string = in_string.translate(self._upper_trans)
         return str.upper(conv_string)
