@@ -12,6 +12,7 @@ from .formatting import escape, unescape
 from .info import Info
 from .imapping import IDict, IList, IString
 from .events import numerics, message_to_event
+from .utils import validate_hostname
 
 loop = asyncio.get_event_loop()
 
@@ -219,6 +220,9 @@ class ServerConnection(asyncio.Protocol):
         elif subcmd == 'ack':
             self.send('CAP', params=['END'])
             self.send_welcome()
+        elif subcmd == 'nak':
+            self.send('CAP', params=['END'])
+            self.send_welcome()
 
     def send_welcome(self):
         self.send('NICK', params=[self.nick])
@@ -239,6 +243,9 @@ class ServerConnection(asyncio.Protocol):
         self.send('PONG', params=event['params'])
 
     # convenience
+    def is_server(self, name):
+        return validate_hostname(name)
+
     def is_channel(self, name):
         if name[0] in self.features.get('chantypes'):
             return True
@@ -246,7 +253,7 @@ class ServerConnection(asyncio.Protocol):
 
     def is_nick(self, name):
         # XXX - lazy for now, to check ISUPPORT etc
-        return not self.is_channel(name)
+        return not self.is_channel(name) and not self.is_server(name)
 
     # commands
     def join_channels(self, *channels):

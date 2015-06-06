@@ -2,8 +2,8 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 from .events import message_to_event
-from .types import User, Channel
-from .utils import NickMask
+from .types import User, Channel, Server
+from .utils import NickMask, CaseInsensitiveDict
 
 
 class Info:
@@ -14,6 +14,7 @@ class Info:
         # information stores
         self.users = self.s.idict()
         self.channels = self.s.idict()
+        self.servers = CaseInsensitiveDict()
 
         # event handlers
         self.s.register_event('in', 'all', self.update_info)
@@ -75,6 +76,10 @@ class Info:
                     'server': self.s,
                     'channel': new_channel,
                 })
+
+    def create_server(self, name):
+        if name not in self.servers:
+            self.servers[name] = Server(self.s, name)
 
     @property
     def json(self):

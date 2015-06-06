@@ -27,19 +27,23 @@ def message_to_event(direction, message):
     info['verb'] = verb
 
     # custom message attributes
-    if verb in ['privmsg', 'pubmsg']:
+    if verb in ('privmsg', 'pubmsg'):
         info['target'] = info['params'][0]
         info['message'] = info['params'][1]
 
-    for attr in ['source', 'target']:
+    # source / target mapping
+    for attr in ('source', 'target'):
         if attr in info and info[attr]:
             source = info[attr]
-            if server.is_nick(source):
-                server.info.create_user(source)
-                info[attr] = server.info.users[NickMask(source).nick]
-            elif server.is_channel(source):
+            if server.is_channel(source):
                 server.info.create_channel(source)
                 info[attr] = server.info.channels[source]
+            elif server.is_server(source):
+                server.info.create_server(source)
+                info[attr] = server.info.servers[source]
+            elif server.is_nick(source):
+                server.info.create_user(source)
+                info[attr] = server.info.users[NickMask(source).nick]
 
     return verb, info
 

@@ -51,10 +51,10 @@ class User(ServerConnected):
 
 class Channel(ServerConnected):
     """An IRC channel."""
-    def __init__(self, server_connection, channel_name):
+    def __init__(self, server_connection, name):
         super().__init__(server_connection)
 
-        self.name = channel_name
+        self.name = name
 
         self.users = {}
 
@@ -70,3 +70,10 @@ class Channel(ServerConnected):
     @users.setter
     def users(self, userlist):
         self._users = self.s.idict()
+
+
+class Server(ServerConnected):
+    def __init__(self, server_connection,name):
+        super().__init__(server_connection)
+
+        self.name = name
