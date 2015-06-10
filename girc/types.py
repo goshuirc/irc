@@ -77,6 +77,16 @@ class Channel(ServerConnected):
     def users(self, userlist):
         self._users = self.s.idict()
 
+    # commands
+    def msg(self, message, formatted=True, tags=None):
+        self.s.msg(self.name, message, formatted=formatted, tags=tags)
+
+    def ctcp(self, message):
+        self.s.ctcp(self.name, message)
+
+    def ctcp_reply(self, message):
+        self.s.ctcp_reply(self.name, message)
+
 
 class Server(ServerConnected):
     def __init__(self, server_connection,name):
