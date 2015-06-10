@@ -29,7 +29,12 @@ def unescape(msg):
         if char == escape_character:
             escape_key = msg[0]
             msg = msg[1:]
-            new_msg += format_dict[escape_key]
+            # we handle this character separately, otherwise we mess up and
+            #   double escape characters while escaping and unescaping
+            if escape_key == escape_character:
+                new_msg += escape_character
+            else:
+                new_msg += format_dict[escape_key]
         else:
             new_msg += char
 
