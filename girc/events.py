@@ -4,19 +4,29 @@
 from .formatting import escape, unescape
 from .utils import NickMask
 
-
-# this table lists which message param should be mapped to the 'message'
-#   attribute in events. this param will be escaped for formatting
-verbs_with_escaped_param_message = {
-    0: (
-        'info', 'endofinfo',
-        'motdstart', 'motd', 'endofmotd',
-        'youreoper',
-        'adminloc1', 'adminloc2', 'adminemail',
-    ),
-    1: (
-        'nosuchnick', 'nosuchserver', 'nosuchchannel',
-    )
+# maps verbs' params to attribute names in event dicts
+# if the param name starts with 'escaped_', the param is escaped
+#   before being set
+# the params 'source' and 'target' will be converted to Client,
+#   Channel, or Server objects in the event dict
+verb_param_map = {
+    'target': {
+        0: (
+            'privmsg', 'pubmsg',
+        ),
+    },
+    'escaped_message': {
+        0: (
+            'info', 'endofinfo',
+            'motdstart', 'motd', 'endofmotd',
+            'youreoper',
+            'adminloc1', 'adminloc2', 'adminemail',
+        ),
+        1: (
+            'privmsg', 'pubmsg'
+            'nosuchnick', 'nosuchserver', 'nosuchchannel',
+        ),
+    },
 }
 
 
@@ -42,15 +52,20 @@ def message_to_event(direction, message):
     info['direction'] = direction
     info['verb'] = verb
 
-    # custom message attributes
-    if verb in ('privmsg', 'pubmsg'):
-        info['target'] = info['params'][0]
-        info['message'] = escape(info['params'][1])
+    # message attributes
+    for attr, param_map in verb_param_map.items():
+        # escaping
+        escaped = False
+        if attr.startswith('escaped_'):
+            attr = attr.lstrip('escaped_')
+            escaped = True
 
-    for param_number, verbs in verbs_with_escaped_param_message.items():
-        if len(info['params']) > param_number:
-            if verb in verbs:
-                info['message'] = escape(info['params'][param_number])
+        for param_number, verbs in param_map.items():
+            if len(info['params']) > param_number and verb in verbs:
+                value = info['params'][param_number]
+                if escaped:
+                    value = escape(value)
+                info[attr] = value
 
     # source / target mapping
     for attr in ('source', 'target'):
