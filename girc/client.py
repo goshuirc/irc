@@ -155,13 +155,14 @@ class ServerConnection(asyncio.Protocol):
         m = RFC1459Message.from_data('raw')
         m.server = self
         m.data = message.to_message()
-        self._events_out.dispatch(*message_to_event('out', m))
+        for name, event in message_to_event('out', m):
+            self._events_out.dispatch(name, event)
 
         m = message
         m.server = self
-        name, event = message_to_event('out', m)
-        self._events_out.dispatch(name, event)
-        self._events_out.dispatch('all', event)
+        for name, event in message_to_event('out', m):
+            self._events_out.dispatch(name, event)
+            self._events_out.dispatch('all', event)
 
         self.transport.write(bytes(final_message, 'UTF-8'))
 
@@ -187,13 +188,14 @@ class ServerConnection(asyncio.Protocol):
             m = RFC1459Message.from_data('raw')
             m.server = self
             m.data = data
-            self._events_in.dispatch(*message_to_event('in', m))
+            for name, event in message_to_event('in', m):
+                self._events_in.dispatch(name, event)
 
             m = RFC1459Message.from_message(data)
             m.server = self
-            name, event = message_to_event('in', m)
-            self._events_in.dispatch(name, event)
-            self._events_in.dispatch('all', event)
+            for name, event in message_to_event('in', m):
+                self._events_in.dispatch(name, event)
+                self._events_in.dispatch('all', event)
 
     # commands
     def msg(self, target, message, formatted=True, tags=None):

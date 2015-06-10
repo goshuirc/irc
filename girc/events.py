@@ -4,6 +4,9 @@
 from .formatting import escape, unescape
 from .utils import NickMask
 
+NAME_ATTR = 0
+INFO_ATTR = 1
+
 # maps verbs' params to attribute names in event dicts
 # if the param name starts with 'escaped_', the param is escaped
 #   before being set
@@ -12,7 +15,7 @@ from .utils import NickMask
 verb_param_map = {
     'target': {
         0: (
-            'privmsg', 'pubmsg',
+            'privmsg', 'pubmsg', 'notice', 'ctcp',
         ),
     },
     'escaped_message': {
@@ -23,7 +26,7 @@ verb_param_map = {
             'adminloc1', 'adminloc2', 'adminemail',
         ),
         1: (
-            'privmsg', 'pubmsg'
+            'privmsg', 'pubmsg', 'notice',
             'nosuchnick', 'nosuchserver', 'nosuchchannel',
         ),
     },
@@ -33,7 +36,8 @@ verb_param_map = {
 def message_to_event(direction, message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
-    We do this because we have to handle special things as well.
+    We do this because we have to handle special things as well, such as CTCP
+    and deconstructing verbs properly.
     """
     server = message.server
 
@@ -52,36 +56,141 @@ def message_to_event(direction, message):
     info['direction'] = direction
     info['verb'] = verb
 
-    # message attributes
-    for attr, param_map in verb_param_map.items():
-        # escaping
-        escaped = False
-        if attr.startswith('escaped_'):
-            attr = attr.lstrip('escaped_')
-            escaped = True
+    infos = [[verb, info],]
 
-        for param_number, verbs in param_map.items():
-            if len(info['params']) > param_number and verb in verbs:
-                value = info['params'][param_number]
-                if escaped:
-                    value = escape(value)
-                info[attr] = value
+    # handle shitty ctcp
+    if verb in ('privmsg', 'pubmsg', 'notice'):
+        infos = []
 
-    # source / target mapping
-    for attr in ('source', 'target'):
-        if attr in info and info[attr]:
-            source = info[attr]
-            if server.is_channel(source):
-                server.info.create_channel(source)
-                info[attr] = server.info.channels[source]
-            elif server.is_server(source):
-                server.info.create_server(source)
-                info[attr] = server.info.servers[source]
-            elif server.is_nick(source):
-                server.info.create_user(source)
-                info[attr] = server.info.users[NickMask(source).nick]
+        M_QUOTE = '\x20'
+        X_QUOTE = '\\'
+        X_DELIM = '\x01'
 
-    return verb, info
+        # low-level dequoting
+        unquoted = ''
+        raw = str(info['params'][1])
+        while len(raw):
+            char = raw[0]
+            raw = raw[1:]
+
+            if char == M_QUOTE:
+                if not len(raw):
+                    continue
+                key = raw[0]
+                raw = raw[1:]
+
+                if key == '0':
+                    unquoted += '\x00'
+                elif key == 'n':
+                    unquoted += '\n'
+                elif key == 'r':
+                    unquoted += '\r'
+                elif key == M_QUOTE:
+                    unquoted += M_QUOTE
+                else:
+                    unquoted += key
+            else:
+                unquoted += char
+        raw = unquoted  # for next level to process
+
+        # tagged data
+        messages = raw.split(X_DELIM)
+
+        for i in range(len(messages)):
+            msg = messages[i]
+            new_info = dict(info)
+
+            if i % 2 == 0:  # is normal message)
+                if not msg:
+                    continue
+                new_info['params'] = new_info['params'][:1]
+                new_info['params'].append(msg)
+            else:
+                new_info['verb'] = 'ctcp'
+                if ' ' in msg.lstrip():
+                    new_info['ctcp_verb'], new_info['ctcp_text'] = msg.lstrip().split(' ', 1)
+                else:
+                    new_info['ctcp_verb'] = msg.lstrip()
+                    new_info['ctcp_text'] = ''
+
+                new_info['ctcp_verb'] = new_info['ctcp_verb'].lower()
+
+            infos.append([new_info['verb'], new_info])
+
+        # ctcp-level dequoting
+        for i in range(len(infos)):
+            if infos[i][NAME_ATTR] == 'ctcp':
+                attrs = ['ctcp_verb, ctcp_text']
+            else:
+                attrs = ['params']
+
+            for attr in attrs:
+                if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
+                    raw_messages = infos[i][INFO_ATTR][attr]
+                else:
+                    raw_messages = [infos[i][INFO_ATTR][attr]]
+
+                messages = []
+                for raw in raw_messages:
+                    unquoted = ''
+                    while len(raw):
+                        char = raw[0]
+                        raw = raw[1:]
+
+                        if char == X_QUOTE:
+                            if not len(raw):
+                                continue
+                            key = raw[0]
+                            raw = raw[1:]
+
+                            if key == 'a':
+                                unquoted += X_DELIM
+                            elif key == X_QUOTE:
+                                unquoted += X_QUOTE
+                            else:
+                                unquoted += key
+                        else:
+                            unquoted += char
+                    messages.append(unquoted)
+
+                if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
+                    infos[i][INFO_ATTR][attr] = messages
+                else:
+                    infos[i][INFO_ATTR][attr] = messages[0]
+
+    # work on each info object separately
+    for i in range(len(infos)):
+
+        # message attributes
+        for attr, param_map in verb_param_map.items():
+            # escaping
+            escaped = False
+            if attr.startswith('escaped_'):
+                attr = attr.lstrip('escaped_')
+                escaped = True
+
+            for param_number, verbs in param_map.items():
+                if len(infos[i][INFO_ATTR]['params']) > param_number and verb in verbs:
+                    value = infos[i][INFO_ATTR]['params'][param_number]
+                    if escaped:
+                        value = escape(value)
+                    infos[i][INFO_ATTR][attr] = value
+
+        # source / target mapping
+        for attr in ('source', 'target'):
+            if attr in infos[i][INFO_ATTR] and infos[i][INFO_ATTR][attr]:
+                source = infos[i][INFO_ATTR][attr]
+                if server.is_channel(source):
+                    server.info.create_channel(source)
+                    infos[i][INFO_ATTR][attr] = server.info.channels[source]
+                elif server.is_server(source):
+                    server.info.create_server(source)
+                    infos[i][INFO_ATTR][attr] = server.info.servers[source]
+                elif server.is_nick(source):
+                    server.info.create_user(source)
+                    infos[i][INFO_ATTR][attr] = server.info.users[NickMask(source).nick]
+
+    return infos
 
 
 # list adapted from https://www.alien.net.au/irc/irc2numerics.html
