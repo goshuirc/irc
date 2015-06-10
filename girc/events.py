@@ -120,7 +120,7 @@ def message_to_event(direction, message):
         # ctcp-level dequoting
         for i in range(len(infos)):
             if infos[i][NAME_ATTR] == 'ctcp':
-                attrs = ['ctcp_verb, ctcp_text']
+                attrs = ['ctcp_verb', 'ctcp_text']
             else:
                 attrs = ['params']
 
