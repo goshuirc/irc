@@ -5,6 +5,21 @@ from .formatting import escape, unescape
 from .utils import NickMask
 
 
+# this table lists which message param should be mapped to the 'message'
+#   attribute in events. this param will be escaped for formatting
+verbs_with_escaped_param_message = {
+    0: (
+        'info', 'endofinfo',
+        'motdstart', 'motd', 'endofmotd',
+        'youreoper',
+        'adminloc1', 'adminloc2', 'adminemail',
+    ),
+    1: (
+        'nosuchnick', 'nosuchserver', 'nosuchchannel',
+    )
+}
+
+
 def message_to_event(direction, message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
@@ -31,6 +46,11 @@ def message_to_event(direction, message):
     if verb in ('privmsg', 'pubmsg'):
         info['target'] = info['params'][0]
         info['message'] = escape(info['params'][1])
+
+    for param_number, verbs in verbs_with_escaped_param_message.items():
+        if len(info['params']) > param_number:
+            if verb in verbs:
+                info['message'] = escape(info['params'][param_number])
 
     # source / target mapping
     for attr in ('source', 'target'):
