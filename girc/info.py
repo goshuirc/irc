@@ -24,15 +24,33 @@ class Info:
             user = event['source']
             channels = event['params'][0].split(',')
 
-            self.create_user(event['source'])
+            self.create_user(user)
             self.create_channels(*channels)
 
             for chan in channels:
                 if chan not in self.users[user.nick].channels:
-                    self.users[user.nick].channels.append(chan)
+                    self.users[user.nick].channel_names.append(chan)
 
                 if user.nick not in self.channels[chan].users:
                     self.channels[chan].users[user.nick] = {}
+
+        if event['verb'] == 'part':
+            user = event['source']
+            channels = event['params'][0].split(',')
+
+            self.create_user(user)
+
+            for chan in channels:
+                if chan not in self.channels:
+                    continue
+
+                if user.nick == self.s.nick:
+                    del self.channels[chan]
+                elif user.nick in self.channels[chan].users:
+                    del self.channels[chan].users[user.nick]
+
+                if chan in self.users[user.nick].channel_names:
+                    self.users[user.nick].channel_names.remove(chan)
 
         # XXX - debug info dumping
         if event['verb'] in ['privmsg', 'pubmsg']:
@@ -86,4 +104,5 @@ class Info:
         return {
             'users': self.users.json,
             'channels': self.channels.json,
+            'servers': self.servers.json,
         }

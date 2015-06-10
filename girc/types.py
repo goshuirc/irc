@@ -20,21 +20,21 @@ class User(ServerConnected):
         self.user = user.user
         self.host = user.host
 
-        self.channels = []
+        self.channel_names = self.s.ilist()
 
     # properties
     @property
     def channels(self):
         chanlist = []
 
-        for channel in self._channels:
-            chanlist.append(self.s.channels[channel])
+        for channel in self.channel_names:
+            chanlist.append(self.s.info.channels[channel])
 
         return chanlist
 
     @channels.setter
     def channels(self, chanlist):
-        self._channels = self.s.ilist(chanlist)
+        self.channel_names = self.s.ilist(chanlist)
 
     @property
     def userhost(self):
