@@ -2,6 +2,7 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 import collections
+import encodings.idna
 
 
 class IMap:
@@ -42,8 +43,7 @@ class IMap:
 
     def _translate(self, value):
         if self._std == 'rfc3454':
-            # python's casefold does nameprep, so just use that
-            return value.casefold()
+            return encodings.idna.nameprep(value)
 
         if self._lower_trans is not None:
             return value.translate(self._lower_trans)
