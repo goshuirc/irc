@@ -44,12 +44,15 @@ def message_to_event(direction, message):
     # change numerics into nice names
     if message.verb in numerics:
         message.verb = numerics[message.verb]
-
-    # differentiate between private and public messages
     verb = message.verb.lower()
+
+    # modify public/private verbs
     if verb == 'privmsg':
         if server.is_channel(message.params[0]):
             verb = 'pubmsg'
+    elif verb == 'umode':
+        if server.is_channel(message.params[0]):
+            verb = 'cmode'
 
     # this is the same as ircreactor does
     info = message.__dict__
