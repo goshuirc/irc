@@ -106,7 +106,10 @@ def message_to_event(direction, message):
                 new_info['params'] = new_info['params'][:1]
                 new_info['params'].append(msg)
             else:
-                new_info['verb'] = 'ctcp'
+                if verb == 'notice':
+                    new_info['verb'] = 'ctcp_reply'
+                else:
+                    new_info['verb'] = 'ctcp'
                 if ' ' in msg.lstrip():
                     new_info['ctcp_verb'], new_info['ctcp_text'] = msg.lstrip().split(' ', 1)
                 else:
