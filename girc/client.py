@@ -224,6 +224,13 @@ class ServerConnection(asyncio.Protocol):
         X_DELIM = '\x01'
         self.notice(target, X_DELIM + message + X_DELIM, formatted=False)
 
+    def join_channel(self, channel, key=None):
+        """Join the given channel."""
+        params = [channel]
+        if key:
+            params.append(key)
+        self.send('JOIN', params=params)
+
     # default events
     def rpl_cap(self, event):
         if event['direction'] == 'in':
@@ -295,4 +302,4 @@ class ServerConnection(asyncio.Protocol):
             if key:
                 params.append(key)
 
-            self.send('JOIN', params=[channel, key])
+            self.join_channel(channel, key=key)
