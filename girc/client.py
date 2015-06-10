@@ -205,6 +205,25 @@ class ServerConnection(asyncio.Protocol):
 
         self.send('PRIVMSG', params=[target, message], source=self.nick, tags=None)
 
+    def notice(self, target, message, formatted=True, tags=None):
+        """Send a notice to the given target."""
+        if formatted:
+            message = unescape(message)
+
+        self.send('NOTICE', params=[target, message], source=self.nick, tags=None)
+
+    def ctcp(self, target, message):
+        """Send a CTCP to the given target."""
+        # we don't support complex ctcp encapsulation because we're somewhat sane
+        X_DELIM = '\x01'
+        self.msg(target, X_DELIM + message + X_DELIM, formatted=False)
+
+    def ctcp_reply(self, target, message):
+        """Send a CTCP to the given target."""
+        # we don't support complex ctcp encapsulation because we're somewhat sane
+        X_DELIM = '\x01'
+        self.notice(target, X_DELIM + message + X_DELIM, formatted=False)
+
     # default events
     def rpl_cap(self, event):
         if event['direction'] == 'in':

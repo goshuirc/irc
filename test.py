@@ -24,6 +24,11 @@ def handle_hi(event):
     if event['message'].lower().startswith('hi'):
         event['source'].msg("Hi! I'm a $c[red,blue]TEST$r bot")
 
+@reactor.handler('in', 'ctcp')
+def handle_ctcp(event):
+    if event['ctcp_verb'] == 'version':
+        event['source'].ctcp_reply('VERSION girc test bot:git:python')
+
 print('Connecting')
 try:
     reactor.start()

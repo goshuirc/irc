@@ -47,6 +47,12 @@ class User(ServerConnected):
     # commands
     def msg(self, message, formatted=True, tags=None):
         self.s.msg(self.nick, message, formatted=formatted, tags=tags)
+
+    def ctcp(self, message):
+        self.s.ctcp(self.nick, message)
+
+    def ctcp_reply(self, message):
+        self.s.ctcp_reply(self.nick, message)
     
 
 class Channel(ServerConnected):
