@@ -3,6 +3,14 @@
 # Released under the ISC license
 from .utils import CaseInsensitiveDict
 
+_limits = [
+    'nicklen',
+    'channellen',
+    'topiclen',
+    'userlen',
+    'linelen',
+]
+
 
 def limit_to_number(limit):
     if limit.startswith('-') or limit.startswith('+'):
@@ -20,8 +28,8 @@ class Features:
         self.available = CaseInsensitiveDict()
         self.s = server_connection
 
-        # RFC1459 basics
-        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#')
+        # RFC1459 basics, plus LINELEN
+        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'LINELEN=512')
 
         # casemapping is a special case
         # we want to avoid calling set_casemapping below
@@ -68,6 +76,9 @@ class Features:
                         for prefix in chan_types:
                             limitavailable[prefix] = limit_to_number(limit)
                     value = limitavailable
+
+                elif feature in _limits:
+                    value = limit_to_number(value)
 
                 if isinstance(value, str) and value.isdigit():
                     value = int(value)
