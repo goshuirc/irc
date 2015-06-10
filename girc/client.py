@@ -8,7 +8,7 @@ from ircreactor.envelope import RFC1459Message
 
 from .capabilities import Capabilities
 from .features import Features
-from .formatting import escape, unescape
+from .formatting import unescape
 from .info import Info
 from .imapping import IDict, IList, IString
 from .events import numerics, message_to_event

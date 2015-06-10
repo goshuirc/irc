@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .formatting import escape, unescape
 from .utils import NickMask
 
 
@@ -29,7 +30,7 @@ def message_to_event(direction, message):
     # custom message attributes
     if verb in ('privmsg', 'pubmsg'):
         info['target'] = info['params'][0]
-        info['message'] = info['params'][1]
+        info['message'] = escape(info['params'][1])
 
     # source / target mapping
     for attr in ('source', 'target'):
