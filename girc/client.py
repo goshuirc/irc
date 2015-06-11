@@ -203,14 +203,14 @@ class ServerConnection(asyncio.Protocol):
         if formatted:
             message = unescape(message)
 
-        self.send('PRIVMSG', params=[target, message], source=self.nick, tags=None)
+        self.send('PRIVMSG', params=[target, message], source=self.nick, tags=tags)
 
     def notice(self, target, message, formatted=True, tags=None):
         """Send a notice to the given target."""
         if formatted:
             message = unescape(message)
 
-        self.send('NOTICE', params=[target, message], source=self.nick, tags=None)
+        self.send('NOTICE', params=[target, message], source=self.nick, tags=tags)
 
     def ctcp(self, target, message):
         """Send a CTCP to the given target."""
@@ -230,6 +230,13 @@ class ServerConnection(asyncio.Protocol):
         if key:
             params.append(key)
         self.send('JOIN', params=params)
+
+    def mode(self, target, mode_string=None, tags=None):
+        """Modes the given target."""
+        params = [target]
+        if mode_string:
+            params += mode_string
+        self.send('MODE', params=params, source=self.nick, tags=tags)
 
     # default events
     def rpl_cap(self, event):
