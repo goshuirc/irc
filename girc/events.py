@@ -2,7 +2,7 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 from .formatting import escape, unescape
-from .utils import NickMask
+from .utils import NickMask, parse_modes
 
 NAME_ATTR = 0
 INFO_ATTR = 1
@@ -16,6 +16,7 @@ verb_param_map = {
     'target': {
         0: (
             'privmsg', 'pubmsg', 'notice', 'ctcp',
+            'cmode', 'umode',
         ),
     },
     'escaped_message': {
@@ -50,7 +51,8 @@ def message_to_event(direction, message):
     if verb == 'privmsg':
         if server.is_channel(message.params[0]):
             verb = 'pubmsg'
-    elif verb == 'umode':
+    elif verb == 'mode':
+        verb = 'umode'
         if server.is_channel(message.params[0]):
             verb = 'cmode'
 
@@ -166,8 +168,9 @@ def message_to_event(direction, message):
 
     # work on each info object separately
     for i in range(len(infos)):
+        name = infos[i][NAME_ATTR]
 
-        # message attributes
+        # standard message attributes
         for attr, param_map in verb_param_map.items():
             # escaping
             escaped = False
@@ -182,8 +185,21 @@ def message_to_event(direction, message):
                         value = escape(value)
                     infos[i][INFO_ATTR][attr] = value
 
+        # custom message attributes
+        if name == 'umode' and len(infos[i][INFO_ATTR]['params']) > 1:
+            infos[i][INFO_ATTR]['modes'] = parse_modes(infos[i][INFO_ATTR]['params'][1:])
+
+        if name == 'cmode' and len(infos[i][INFO_ATTR]['params']) > 1:
+            infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][1]
+
+            if len(infos[i][INFO_ATTR]['params']) > 2:
+                chanmodes = server.features.get('chanmodes')
+                modes = parse_modes(infos[i][INFO_ATTR]['params'][2:], chanmodes)
+
+                infos[i][INFO_ATTR]['modes'] = modes
+
         # source / target mapping
-        for attr in ('source', 'target'):
+        for attr in ('source', 'target', 'channel'):
             if attr in infos[i][INFO_ATTR] and infos[i][INFO_ATTR][attr]:
                 source = infos[i][INFO_ATTR][attr]
                 if server.is_channel(source):
@@ -233,7 +249,7 @@ numerics = {
     '216': 'statskline',
     '218': 'statsyline',
     '219': 'endofstats',
-    '221': 'umodeis',
+    '221': 'umode',
     '234': 'servlist',
     '235': 'servlistend',
     '236': 'statsverbose',
@@ -288,7 +304,7 @@ numerics = {
     '320': 'whoisspecial',
     '322': 'list',
     '323': 'listend',
-    '324': 'channelmodeis',
+    '324': 'cmode',
     '326': 'nochanpass',
     '327': 'chpassunknown',
     '328': 'channel_url',

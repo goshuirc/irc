@@ -31,6 +31,8 @@ class Features:
         # RFC1459 basics, plus LINELEN
         self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'LINELEN=512')
 
+        self.ingest('CHANMODES=,,,')  # this just creates empty list for us
+
         # casemapping is a special case
         # we want to avoid calling set_casemapping below
         self.available['casemapping'] = 'rfc1459'

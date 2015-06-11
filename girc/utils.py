@@ -4,6 +4,41 @@
 import collections
 
 
+def parse_modes(params, mode_types=None):
+    """Return a modelist.
+
+    Args:
+        params (str): Parameters from MODE event.
+        mode_types (list): CHANMODES-like mode types.
+    """
+    if params[0][0] not in '+-':
+        raise Exception('first param must start with + or -')
+
+    if mode_types is None:
+        mode_types = ['','','','']
+
+    mode_string = params.pop(0)
+    args = params
+
+    assembled_modes = []
+    direction = mode_string[0]
+    for char in mode_string:
+        if char in '+-':
+            direction = char
+            continue
+
+        if (char in mode_types[0] or char in mode_types[1] or
+            (char in mode_types[2] and direction == '+')
+            and len(args)):
+                value = args.pop(0)
+        else:
+            value = None
+
+        assembled_modes.append([direction, char, value])
+
+    return assembled_modes
+
+
 class NickMask:
     def __init__(self, mask):
         self.nick = ''

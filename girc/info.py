@@ -34,6 +34,8 @@ class Info:
                 if user.nick not in self.channels[chan].users:
                     self.channels[chan].users[user.nick] = {}
 
+                self.s.mode(chan)
+
         if event['verb'] == 'part':
             user = event['source']
             channels = event['params'][0].split(',')
