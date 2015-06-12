@@ -24,6 +24,8 @@ class Capabilities:
 
                 if '=' in cap:
                     cap, value = cap.rsplit('=', 1)
+                    if value = '':
+                        value = None
                 else:
                     value = True
 
