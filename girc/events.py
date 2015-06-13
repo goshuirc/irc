@@ -31,10 +31,15 @@ verb_param_map = {
             'nosuchnick', 'nosuchserver', 'nosuchchannel',
         ),
     },
+    'channel': {
+        2: (
+            'namreply',
+        ),
+    },
     'channels': {
         0: (
             'join', 'part',
-        )
+        ),
     }
 }
 
@@ -203,6 +208,20 @@ def message_to_event(direction, message):
 
                 infos[i][INFO_ATTR]['modes'] = modes
 
+        if name == 'namreply':
+            nice_names = []
+            raw_names = infos[i][INFO_ATTR]['params'][3].split(' ')
+
+            for name in raw_names:
+                prefixes = ''
+                while name[0] in server.features.available['prefix'].values():
+                    prefixes += name[0]
+                    name = name[1:]
+
+                nice_names.append(name)
+
+            infos[i][INFO_ATTR]['users'] = ','.join(nice_names)
+
         # source / target mapping
         for attr in ('source', 'target', 'channel'):
             if attr in infos[i][INFO_ATTR] and infos[i][INFO_ATTR][attr]:
@@ -223,6 +242,13 @@ def message_to_event(direction, message):
                 server.info.create_channel(chan)
                 channels.append(server.info.channels.get(chan))
             infos[i][INFO_ATTR]['channels'] = channels
+
+        if 'users' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['users']:
+            users = []
+            for user in infos[i][INFO_ATTR]['users'].split(','):
+                server.info.create_user(user)
+                users.append(server.info.users.get(NickMask(user).nick))
+            infos[i][INFO_ATTR]['users'] = users
 
     return infos
 
