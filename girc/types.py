@@ -68,6 +68,7 @@ class Channel(ServerConnected):
         super().__init__(server_connection)
 
         self.name = name
+        self.joined = False  # whether we are joined to this channel
 
         self.users = {}
 
@@ -99,6 +100,9 @@ class Channel(ServerConnected):
 
     def ctcp_reply(self, message):
         self.s.ctcp_reply(self.name, message)
+
+    def get_modes(self):
+        self.s.mode(self.name)
 
 
 class Server(ServerConnected):

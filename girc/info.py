@@ -7,7 +7,26 @@ from .utils import NickMask, CaseInsensitiveDict
 
 
 class Info:
-    """Stores state information for a server connection."""
+    """Stores state information for a server connection.
+
+    This is where we differ from most other libraries. We store information for
+    clients, users, and servers as ``girc.types.*`` objects. We pass these
+    objects around directly in the Event dictionaries as they are dispatched.
+    The reasons we do this are detailed in the State Tracking dev note (in the
+    docs directory).
+
+    The ``channels`` dict should only contain channels we are joined to.
+    We should not keep track of information for channels we have parted.
+
+    The ``users`` dict should only contain users we share channels with, or
+    have sent us messages / commands. If we do not share a channel with a user,
+    they may be removed from here.
+
+    The ``servers`` dict will contain all the servers we have received
+    communications from in the past. We don't store much info for each server,
+    and networks generally don't have a million servers, so we shouldn't need
+    to worry about deleting these.
+    """
     def __init__(self, server_connection):
         self.s = server_connection
 
@@ -16,43 +35,39 @@ class Info:
         self.channels = self.s.idict()
         self.servers = CaseInsensitiveDict()
 
-        # event handlers
-        self.s.register_event('in', 'all', self.update_info)
-
-    def update_info(self, event):
+    def handle_event_in(self, event):
         if event['verb'] == 'join':
             user = event['source']
-            channels = event['params'][0].split(',')
-
-            self.create_user(user)
-            self.create_channels(*channels)
+            channels = event['channels']
 
             for chan in channels:
-                if chan not in self.users[user.nick].channels:
-                    self.users[user.nick].channel_names.append(chan)
+                if chan.name not in user.channel_names:
+                    user.channel_names.append(chan.name)
 
-                if user.nick not in self.channels[chan].users:
-                    self.channels[chan].users[user.nick] = {}
+                if user.nick not in chan.users:
+                    chan.users[user.nick] = {}
 
-                self.s.mode(chan)
+                if user.nick == self.s.nick:
+                    chan.joined = True
+
+                chan.get_modes()
 
         if event['verb'] == 'part':
             user = event['source']
-            channels = event['params'][0].split(',')
-
-            self.create_user(user)
+            channels = event['channels']
 
             for chan in channels:
-                if chan not in self.channels:
-                    continue
+                if user.nick in chan.users:
+                    del chan.users[user.nick]
+
+                if chan.name in user.channel_names:
+                    user.channel_names.remove(chan.name)
 
                 if user.nick == self.s.nick:
-                    del self.channels[chan]
-                elif user.nick in self.channels[chan].users:
-                    del self.channels[chan].users[user.nick]
+                    chan.joined = False
 
-                if chan in self.users[user.nick].channel_names:
-                    self.users[user.nick].channel_names.remove(chan)
+        if event['verb'] == 'cmode':
+            channel = event['channel']
 
         # XXX - debug info dumping
         if event['verb'] in ['privmsg', 'pubmsg']:
@@ -60,8 +75,11 @@ class Info:
                 from pprint import pprint
                 pprint(self.json)
 
+    def handle_event_out(self, event):
+        ...
+
     def create_user(self, userhost):
-        if isinstance(userhost, User):
+        if userhost == '*':
             return
 
         user = NickMask(userhost)

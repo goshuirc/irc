@@ -161,6 +161,7 @@ class ServerConnection(asyncio.Protocol):
         m = message
         m.server = self
         for name, event in message_to_event('out', m):
+            self.info.handle_event_out(event)
             self._events_out.dispatch(name, event)
             self._events_out.dispatch('all', event)
 
@@ -194,6 +195,7 @@ class ServerConnection(asyncio.Protocol):
             m = RFC1459Message.from_message(data)
             m.server = self
             for name, event in message_to_event('in', m):
+                self.info.handle_event_in(event)
                 self._events_in.dispatch(name, event)
                 self._events_in.dispatch('all', event)
 

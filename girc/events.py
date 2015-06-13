@@ -31,6 +31,11 @@ verb_param_map = {
             'nosuchnick', 'nosuchserver', 'nosuchchannel',
         ),
     },
+    'channels': {
+        0: (
+            'join', 'part',
+        )
+    }
 }
 
 
@@ -204,13 +209,20 @@ def message_to_event(direction, message):
                 source = infos[i][INFO_ATTR][attr]
                 if server.is_channel(source):
                     server.info.create_channel(source)
-                    infos[i][INFO_ATTR][attr] = server.info.channels[source]
+                    infos[i][INFO_ATTR][attr] = server.info.channels.get(source)
                 elif server.is_server(source):
                     server.info.create_server(source)
-                    infos[i][INFO_ATTR][attr] = server.info.servers[source]
+                    infos[i][INFO_ATTR][attr] = server.info.servers.get(source)
                 elif server.is_nick(source):
                     server.info.create_user(source)
-                    infos[i][INFO_ATTR][attr] = server.info.users[NickMask(source).nick]
+                    infos[i][INFO_ATTR][attr] = server.info.users.get(NickMask(source).nick)
+
+        if 'channels' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['channels']:
+            channels = []
+            for chan in infos[i][INFO_ATTR]['channels'].split(','):
+                server.info.create_channel(chan)
+                channels.append(server.info.channels.get(chan))
+            infos[i][INFO_ATTR]['channels'] = channels
 
     return infos
 
