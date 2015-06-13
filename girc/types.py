@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from .formatting import unescape
 from .utils import NickMask
 
 
@@ -48,6 +49,12 @@ class User(ServerConnected):
     def msg(self, message, formatted=True, tags=None):
         self.s.msg(self.nick, message, formatted=formatted, tags=tags)
 
+    def me(self, message, formatted=True):
+        if formatted:
+            message = unescape(message)
+
+        self.ctcp('ACTION ' + message)
+
     def ctcp(self, message):
         self.s.ctcp(self.nick, message)
 
@@ -80,6 +87,12 @@ class Channel(ServerConnected):
     # commands
     def msg(self, message, formatted=True, tags=None):
         self.s.msg(self.name, message, formatted=formatted, tags=tags)
+
+    def me(self, message, formatted=True):
+        if formatted:
+            message = unescape(message)
+
+        self.ctcp('ACTION ' + message)
 
     def ctcp(self, message):
         self.s.ctcp(self.name, message)
