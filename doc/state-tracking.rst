@@ -7,7 +7,7 @@ There are two main ways we can track state and pass users/channels through our e
 1. User / Channel objects, info gotten like: ``event['source'].host``
 2. Everything stored as dicts, and requested as ``event['server'].info.get_user('nick').get('host')`` at runtime
 
----
+----
 
 Upsides of objects
 ------------------
@@ -23,7 +23,7 @@ This problem could be pushed aside by calling the ``update_info`` function befor
 
 That 100% perfect option throws out the fact that on ``part`` events, it makes more sense to give them all the information we knew about that channel at the time of the part, rather than removing the channel from our ``Info`` list and then giving them a ``None`` or whatever since the channel no longer exists for the second event creation.
 
----
+----
 
 Upsides of dicts / strings
 --------------------------
@@ -39,7 +39,7 @@ Taking the ``CHGHOST`` example above, if we create the events, then call ``updat
 
 We could do it this way, but it feels like a compromise that I don't want to make.
 
----
+----
 
 The best path here would probably be to use objects. That way, we can create the events, call ``update_info`` specially before we enter the event dispatching queue, and then dispatch that event in the normal way.
 
