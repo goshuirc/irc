@@ -209,7 +209,12 @@ def message_to_event(direction, message):
                 infos[i][INFO_ATTR]['modes'] = modes
 
         if name == 'namreply':
+            channel_name = infos[i][INFO_ATTR]['params'][2]
+            server.info.create_channel(channel_name)
+            channel = server.info.channels.get(channel_name)
+
             nice_names = []
+            channel_prefixes = {}
             raw_names = infos[i][INFO_ATTR]['params'][3].split(' ')
 
             for name in raw_names:
@@ -218,9 +223,17 @@ def message_to_event(direction, message):
                     prefixes += name[0]
                     name = name[1:]
 
+                nick = NickMask(name).nick
+
+                server.info.create_user(nick)
                 nice_names.append(name)
+                server.info.create_user(name)
+                user = server.info.users.get(nick)
+                channel_prefixes[user] = prefixes
+                channel.prefixes[nick] = prefixes
 
             infos[i][INFO_ATTR]['users'] = ','.join(nice_names)
+            infos[i][INFO_ATTR]['prefixes'] = channel_prefixes
 
         # source / target mapping
         for attr in ('source', 'target', 'channel'):

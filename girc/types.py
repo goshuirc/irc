@@ -70,20 +70,17 @@ class Channel(ServerConnected):
         self.name = name
         self.joined = False  # whether we are joined to this channel
 
-        self.users = {}
+        self._user_nicks = []
+        self.prefixes = {}
 
     @property
     def users(self):
         userlist = {}
 
-        for nick in self._users:
-            userlist[nick] = self.s.users[nick]
+        for nick in self._user_nicks:
+            userlist[nick] = self.s.info.users[nick]
 
         return userlist
-
-    @users.setter
-    def users(self, userlist):
-        self._users = self.s.idict()
 
     # commands
     def msg(self, message, formatted=True, tags=None):
