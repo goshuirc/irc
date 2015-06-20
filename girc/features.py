@@ -37,6 +37,45 @@ class Features:
         # we want to avoid calling set_casemapping below
         self.available['casemapping'] = 'rfc1459'
 
+    def _simplify_feature_value(self, feature, value):
+        """Split up features and return a human-readable value."""
+        # special processing for certain features
+        if feature == 'prefix':
+            channel_modes, channel_chars = value.split(')')
+            channel_modes = channel_modes[1:]
+
+            value = dict(zip(channel_modes, channel_chars))
+            return value
+
+        elif feature == 'chanmodes':
+            value = value.split(',')
+            return value
+
+        elif feature == 'targmax':
+            max_available = {}
+            for sort in value.split(','):
+                command, limit = sort.split(':')
+                command = command.casefold()
+                max_available[command] = limit_to_number(limit)
+
+            return max_available
+
+        elif feature == 'chanlimit':
+            limit_available = {}
+            for sort in value.split(','):
+                chan_types, limit = sort.split(':')
+                for prefix in chan_types:
+                    limit_available[prefix] = limit_to_number(limit)
+
+            return limit_available
+
+        elif feature in _limits:
+            value = limit_to_number(value)
+            return value
+
+        else:
+            return value
+
     def ingest(self, *parameters):
         for feature in parameters:
             if feature.startswith('-'):
@@ -54,33 +93,7 @@ class Features:
 
                 feature = feature.casefold()
 
-                # special processing for certain features
-                if feature == 'prefix':
-                    channel_modes, channel_chars = value.split(')')
-                    channel_modes = channel_modes[1:]
-
-                    value = dict(zip(channel_modes, channel_chars))
-                
-                elif feature == 'chanmodes':
-                    value = value.split(',')
-
-                elif feature == 'targmax':
-                    maxavailable = {}
-                    for sort in value.split(','):
-                        command, limit = sort.split(':')
-                        command = command.casefold()
-                        maxavailable[command] = limit_to_number(limit)
-
-                elif feature == 'chanlimit':
-                    limitavailable = {}
-                    for sort in value.split(','):
-                        chan_types, limit = sort.split(':')
-                        for prefix in chan_types:
-                            limitavailable[prefix] = limit_to_number(limit)
-                    value = limitavailable
-
-                elif feature in _limits:
-                    value = limit_to_number(value)
+                value = self._simplify_feature_value(feature, value)
 
                 if isinstance(value, str) and value.isdigit():
                     value = int(value)

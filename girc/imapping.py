@@ -8,24 +8,17 @@ import encodings.idna
 class IMap:
     """Base object for supporting IRC casemapping."""
     def __init__(self):
-        # default to 1459
-        self.set_std('rfc1459')
+        self._std = None
 
-    def set_std(self, std):
-        """Set the standard we'll be using (isupport CASEMAPPING)."""
-        # translation based on std
         self._lower_chars = None
         self._upper_chars = None
 
         self._lower_trans = None
         self._upper_trans = None
 
-        self._std = std.lower()
-
-        if self._std == 'ascii':
-            pass
-
-        elif self._std == 'rfc1459':
+    def _set_transmaps(self):
+        """Set translation maps for our standard."""
+        if self._std == 'rfc1459':
             self._lower_chars = ''.join(chr(i) for i in range(91, 95))
             self._upper_chars = ''.join(chr(i) for i in range(123, 127))
 
@@ -33,9 +26,20 @@ class IMap:
             self._lower_chars = ''.join(chr(i) for i in range(91, 94))
             self._upper_chars = ''.join(chr(i) for i in range(123, 126))
 
-        elif self._std == 'rfc3454':
-            ...
+        # ascii and rfc3454 don't need any special ones, handled by str.lower()
 
+    def set_std(self, std):
+        """Set the standard we'll be using (isupport CASEMAPPING)."""
+        if not hasattr(self, '_std'):
+            IMap.__init__(self)
+
+        # translation based on std
+        self._std = std.lower()
+
+        # set casemapping maps
+        self._set_transmaps()
+
+        # create translations
         if self._lower_chars:
             self._lower_trans = str.maketrans(self._lower_chars, self._upper_chars)
         if self._upper_chars:
