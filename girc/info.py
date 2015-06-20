@@ -35,39 +35,20 @@ class Info:
         self.channels = self.s.idict()
         self.servers = CaseInsensitiveDict()
 
+        # internal event handlers
+        _in_handlers = {
+            'join': self.in_join_handler,
+            'part': self.in_part_handler,
+            'cmode': self.in_cmode_handler,
+        }
+
+    # base event handlers
     def handle_event_in(self, event):
-        if event['verb'] == 'join':
-            user = event['source']
-            channels = event['channels']
+        # pass to specific event handlers
+        handler = self._in_handlers.get(event['verb'])
 
-            for chan in channels:
-                if chan.name not in user.channel_names:
-                    user.channel_names.append(chan.name)
-
-                if user.nick not in chan.users:
-                    chan.users[user.nick] = {}
-
-                if user.nick == self.s.nick:
-                    chan.joined = True
-
-                chan.get_modes()
-
-        if event['verb'] == 'part':
-            user = event['source']
-            channels = event['channels']
-
-            for chan in channels:
-                if user.nick in chan.users:
-                    del chan.users[user.nick]
-
-                if chan.name in user.channel_names:
-                    user.channel_names.remove(chan.name)
-
-                if user.nick == self.s.nick:
-                    chan.joined = False
-
-        if event['verb'] == 'cmode':
-            channel = event['channel']
+        if handler:
+            handler(event)
 
         # XXX - debug info dumping
         if event['verb'] in ['privmsg', 'pubmsg']:
@@ -78,6 +59,41 @@ class Info:
     def handle_event_out(self, event):
         ...
 
+    # specific event handlers
+    def in_join_handler(self, event):
+        user = event['source']
+        channels = event['channels']
+
+        for chan in channels:
+            if chan.name not in user.channel_names:
+                user.channel_names.append(chan.name)
+
+            if user.nick not in chan.users:
+                chan.users[user.nick] = {}
+
+            if user.nick == self.s.nick:
+                chan.joined = True
+
+            chan.get_modes()
+
+    def in_part_handler(self, event):
+        user = event['source']
+        channels = event['channels']
+
+        for chan in channels:
+            if user.nick in chan.users:
+                del chan.users[user.nick]
+
+            if chan.name in user.channel_names:
+                user.channel_names.remove(chan.name)
+
+            if user.nick == self.s.nick:
+                chan.joined = False
+
+    def in_cmode_handler(self, event):
+        channel = event['channel']
+
+    # utility functions
     def create_user(self, userhost):
         if userhost == '*':
             return
