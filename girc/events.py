@@ -44,6 +44,116 @@ verb_param_map = {
 }
 
 
+def ctcp_unpack_message(info):
+    """Given a an input message (privmsg/pubmsg/notice), return events."""
+    verb = info['verb']
+    message = info['params'][1]
+
+    # basics
+    infos = []
+
+    M_QUOTE = '\x20'
+    X_QUOTE = '\\'
+    X_DELIM = '\x01'
+
+    # low-level dequoting
+    unquoted = ''
+    raw = str(message)
+    while len(raw):
+        char = raw[0]
+        raw = raw[1:]
+
+        if char == M_QUOTE:
+            if not len(raw):
+                continue
+            key = raw[0]
+            raw = raw[1:]
+
+            if key == '0':
+                unquoted += '\x00'
+            elif key == 'n':
+                unquoted += '\n'
+            elif key == 'r':
+                unquoted += '\r'
+            elif key == M_QUOTE:
+                unquoted += M_QUOTE
+            else:
+                unquoted += key
+        else:
+            unquoted += char
+    raw = unquoted  # for next level to process
+
+    # tagged data
+    messages = raw.split(X_DELIM)
+
+    for i in range(len(messages)):
+        msg = messages[i]
+        new_info = dict(info)
+
+        if i % 2 == 0:  # is normal message)
+            if not msg:
+                continue
+            new_info['params'] = new_info['params'][:1]
+            new_info['params'].append(msg)
+        else:
+            if verb == 'notice':
+                new_info['verb'] = 'ctcp_reply'
+            else:
+                new_info['verb'] = 'ctcp'
+            if ' ' in msg.lstrip():
+                new_info['ctcp_verb'], new_info['ctcp_text'] = msg.lstrip().split(' ', 1)
+            else:
+                new_info['ctcp_verb'] = msg.lstrip()
+                new_info['ctcp_text'] = ''
+
+            new_info['ctcp_verb'] = new_info['ctcp_verb'].lower()
+
+        infos.append([new_info['verb'], new_info])
+
+    # ctcp-level dequoting
+    for i in range(len(infos)):
+        if infos[i][NAME_ATTR] == 'ctcp':
+            attrs = ['ctcp_verb', 'ctcp_text']
+        else:
+            attrs = ['params']
+
+        for attr in attrs:
+            if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
+                raw_messages = infos[i][INFO_ATTR][attr]
+            else:
+                raw_messages = [infos[i][INFO_ATTR][attr]]
+
+            messages = []
+            for raw in raw_messages:
+                unquoted = ''
+                while len(raw):
+                    char = raw[0]
+                    raw = raw[1:]
+
+                    if char == X_QUOTE:
+                        if not len(raw):
+                            continue
+                        key = raw[0]
+                        raw = raw[1:]
+
+                        if key == 'a':
+                            unquoted += X_DELIM
+                        elif key == X_QUOTE:
+                            unquoted += X_QUOTE
+                        else:
+                            unquoted += key
+                    else:
+                        unquoted += char
+                messages.append(unquoted)
+
+            if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
+                infos[i][INFO_ATTR][attr] = messages
+            else:
+                infos[i][INFO_ATTR][attr] = messages[0]
+
+    return infos
+
+
 def message_to_event(direction, message):
     """Prepare an ``RFC1459Message`` for event dispatch.
 
@@ -75,106 +185,7 @@ def message_to_event(direction, message):
 
     # handle shitty ctcp
     if verb in ('privmsg', 'pubmsg', 'notice'):
-        infos = []
-
-        M_QUOTE = '\x20'
-        X_QUOTE = '\\'
-        X_DELIM = '\x01'
-
-        # low-level dequoting
-        unquoted = ''
-        raw = str(info['params'][1])
-        while len(raw):
-            char = raw[0]
-            raw = raw[1:]
-
-            if char == M_QUOTE:
-                if not len(raw):
-                    continue
-                key = raw[0]
-                raw = raw[1:]
-
-                if key == '0':
-                    unquoted += '\x00'
-                elif key == 'n':
-                    unquoted += '\n'
-                elif key == 'r':
-                    unquoted += '\r'
-                elif key == M_QUOTE:
-                    unquoted += M_QUOTE
-                else:
-                    unquoted += key
-            else:
-                unquoted += char
-        raw = unquoted  # for next level to process
-
-        # tagged data
-        messages = raw.split(X_DELIM)
-
-        for i in range(len(messages)):
-            msg = messages[i]
-            new_info = dict(info)
-
-            if i % 2 == 0:  # is normal message)
-                if not msg:
-                    continue
-                new_info['params'] = new_info['params'][:1]
-                new_info['params'].append(msg)
-            else:
-                if verb == 'notice':
-                    new_info['verb'] = 'ctcp_reply'
-                else:
-                    new_info['verb'] = 'ctcp'
-                if ' ' in msg.lstrip():
-                    new_info['ctcp_verb'], new_info['ctcp_text'] = msg.lstrip().split(' ', 1)
-                else:
-                    new_info['ctcp_verb'] = msg.lstrip()
-                    new_info['ctcp_text'] = ''
-
-                new_info['ctcp_verb'] = new_info['ctcp_verb'].lower()
-
-            infos.append([new_info['verb'], new_info])
-
-        # ctcp-level dequoting
-        for i in range(len(infos)):
-            if infos[i][NAME_ATTR] == 'ctcp':
-                attrs = ['ctcp_verb', 'ctcp_text']
-            else:
-                attrs = ['params']
-
-            for attr in attrs:
-                if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
-                    raw_messages = infos[i][INFO_ATTR][attr]
-                else:
-                    raw_messages = [infos[i][INFO_ATTR][attr]]
-
-                messages = []
-                for raw in raw_messages:
-                    unquoted = ''
-                    while len(raw):
-                        char = raw[0]
-                        raw = raw[1:]
-
-                        if char == X_QUOTE:
-                            if not len(raw):
-                                continue
-                            key = raw[0]
-                            raw = raw[1:]
-
-                            if key == 'a':
-                                unquoted += X_DELIM
-                            elif key == X_QUOTE:
-                                unquoted += X_QUOTE
-                            else:
-                                unquoted += key
-                        else:
-                            unquoted += char
-                    messages.append(unquoted)
-
-                if isinstance(infos[i][INFO_ATTR][attr], (list, tuple)):
-                    infos[i][INFO_ATTR][attr] = messages
-                else:
-                    infos[i][INFO_ATTR][attr] = messages[0]
+        infos = ctcp_unpack_message(info)
 
     # work on each info object separately
     for i in range(len(infos)):
@@ -208,7 +219,7 @@ def message_to_event(direction, message):
 
                 infos[i][INFO_ATTR]['modes'] = modes
 
-        if name == 'namreply':
+        if name == 'namreply' and len(infos[i][INFO_ATTR]['params']) > 3:
             channel_name = infos[i][INFO_ATTR]['params'][2]
             server.info.create_channel(channel_name)
             channel = server.info.channels.get(channel_name)
