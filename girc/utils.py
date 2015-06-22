@@ -49,6 +49,10 @@ class NickMask:
             self.nick, rest = mask.split('!', 1)
             if '@' in rest:
                 self.user, self.host = rest.split('@', 1)
+            else:
+                self.user = rest
+        elif '@' in mask:
+            self.nick, self.host = mask.split('@', 1)
         else:
             self.nick = mask
 
