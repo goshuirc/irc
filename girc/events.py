@@ -18,6 +18,9 @@ verb_param_map = {
             'privmsg', 'pubmsg', 'notice', 'ctcp',
             'cmode', 'umode',
         ),
+        1: (
+            'cmodeis',
+        ),
     },
     'escaped_message': {
         0: (
@@ -211,13 +214,27 @@ def message_to_event(direction, message):
             infos[i][INFO_ATTR]['modes'] = parse_modes(infos[i][INFO_ATTR]['params'][1:])
 
         if name == 'cmode' and len(infos[i][INFO_ATTR]['params']) > 1:
-            infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][1]
+            infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][0]
+
+            chanmodes = server.features.get('chanmodes')
+            modes = parse_modes(infos[i][INFO_ATTR]['params'][1:], chanmodes)
+
+            infos[i][INFO_ATTR]['modes'] = modes
+
+        if name == 'cmodeis':
+            if len(infos[i][INFO_ATTR]['params']) > 1:
+                infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][1]
 
             if len(infos[i][INFO_ATTR]['params']) > 2:
                 chanmodes = server.features.get('chanmodes')
                 modes = parse_modes(infos[i][INFO_ATTR]['params'][2:], chanmodes)
 
                 infos[i][INFO_ATTR]['modes'] = modes
+            else:
+                infos[i][INFO_ATTR]['modes'] = []
+
+            name = 'cmode'
+            infos[i][INFO_ATTR]['verb'] = 'cmode'
 
         if name == 'namreply' and len(infos[i][INFO_ATTR]['params']) > 3:
             channel_name = infos[i][INFO_ATTR]['params'][2]
@@ -366,7 +383,7 @@ numerics = {
     '320': 'whoisspecial',
     '322': 'list',
     '323': 'listend',
-    '324': 'cmode',
+    '324': 'cmodeis',
     '326': 'nochanpass',
     '327': 'chpassunknown',
     '328': 'channel_url',
