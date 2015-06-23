@@ -36,7 +36,7 @@ class Info:
         self.servers = CaseInsensitiveDict()
 
         # internal event handlers
-        _in_handlers = {
+        self._in_handlers = {
             'join': self.in_join_handler,
             'part': self.in_part_handler,
             'cmode': self.in_cmode_handler,
