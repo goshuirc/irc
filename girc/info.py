@@ -93,6 +93,25 @@ class Info:
     def in_cmode_handler(self, event):
         channel = event['channel']
 
+        for unary, char, argument in event['modes']:
+            if unary == '+':
+                if argument:
+                    if char in channel.modes and isinstance(channel.modes[char], list):
+                        if argument not in channel.modes[char]:
+                            channel.modes[char].append(argument)
+                    else:
+                        channel.modes[char] = argument
+                else:
+                    channel.modes[char] = True
+            elif unary == '-':
+                if argument:
+                    if char in channel.modes and isinstance(channel.modes[char], list):
+                        if argument in channel.modes[char]:
+                            channel.modes[char].remove(argument)
+                else:
+                    if char in channel.modes:
+                        del channel.modes[char]
+
     # utility functions
     def create_user(self, userhost):
         if userhost == '*':

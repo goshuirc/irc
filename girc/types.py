@@ -73,6 +73,16 @@ class Channel(ServerConnected):
         self._user_nicks = []
         self.prefixes = {}
 
+        self._init_modes()
+
+    def _init_modes(self):
+        self.modes = {}
+
+        a, b, c, d = self.s.features.available['chanmodes']
+
+        for char in a:
+            self.modes[char] = []
+
     @property
     def users(self):
         userlist = {}
