@@ -15,15 +15,18 @@ reactor.join_channels('local', '#services', '#a', '#testchan')
 def handle_raw_in(event):
     print(event['server'].name, ' ->', escape(event['data']))
 
+
 @reactor.handler('out', 'raw', priority=1)
 def handle_raw_out(event):
     print(event['server'].name, '<- ', escape(event['data']))
+
 
 @reactor.handler('in', 'pubmsg')
 @reactor.handler('in', 'privmsg')
 def handle_hi(event):
     if event['message'].lower().startswith('hi'):
         event['source'].msg("Hi! I'm a $c[red,blue]TEST$r bot")
+
 
 @reactor.handler('in', 'ctcp')
 def handle_ctcp(event):
