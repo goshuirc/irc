@@ -166,7 +166,7 @@ class IList(collections.MutableSequence, IMap):
 
 
 class IString(str, IMap):
-    """Case-insensitive IRC string (for channel/usernames), based on IRC casemapping standards."""
+    """Case-insensitive IRC string (for channel/usernames), based on IRC casemapping."""
 
     def lower(self):
         new_string = IString(self._irc_lower(self))
