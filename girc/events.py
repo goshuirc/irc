@@ -55,39 +55,11 @@ def ctcp_unpack_message(info):
     # basics
     infos = []
 
-    M_QUOTE = '\x20'
     X_QUOTE = '\\'
     X_DELIM = '\x01'
 
-    # low-level dequoting
-    unquoted = ''
-    raw = str(message)
-    while len(raw):
-        char = raw[0]
-        raw = raw[1:]
-
-        if char == M_QUOTE:
-            if not len(raw):
-                continue
-            key = raw[0]
-            raw = raw[1:]
-
-            if key == '0':
-                unquoted += '\x00'
-            elif key == 'n':
-                unquoted += '\n'
-            elif key == 'r':
-                unquoted += '\r'
-            elif key == M_QUOTE:
-                unquoted += M_QUOTE
-            else:
-                unquoted += key
-        else:
-            unquoted += char
-    raw = unquoted  # for next level to process
-
     # tagged data
-    messages = raw.split(X_DELIM)
+    messages = str(message).split(X_DELIM)
 
     for i in range(len(messages)):
         msg = messages[i]
