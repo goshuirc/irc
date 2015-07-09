@@ -295,7 +295,8 @@ def message_to_event(direction, message):
 
 
 # list adapted from https://www.alien.net.au/irc/irc2numerics.html
-# probably insane stuff in here, and stuff that's not implemented in anything really
+# some stuff in here is insane, but we can fix bad numerics as we find them
+# we prefer IRCv3 numerics over most everything else
 numerics = {
     '001': 'welcome',
     '002': 'yourhost',
