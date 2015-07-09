@@ -5,11 +5,11 @@ from .formatting import unescape
 from .utils import NickMask
 
 
-class SourceableUserChan:
-    """Provides events that can originate from a user or a channel."""
+class TargetableUserChan:
+    """Provides events that can be sent to a user or a channel."""
 
     def msg(self, message, formatted=True, tags=None):
-        self.s.msg(self._source, message, formatted=formatted, tags=tags)
+        self.s.msg(self._target, message, formatted=formatted, tags=tags)
 
     def me(self, message, formatted=True):
         if formatted:
@@ -18,13 +18,13 @@ class SourceableUserChan:
         self.ctcp('ACTION', message)
 
     def ctcp(self, ctcp_verb, argument=None):
-        self.s.ctcp(self._source, ctcp_verb, argument=argument)
+        self.s.ctcp(self._target, ctcp_verb, argument=argument)
 
     def ctcp_reply(self, ctcp_verb, argument=None):
-        self.s.ctcp_reply(self._source, ctcp_verb, argument=argument)
+        self.s.ctcp_reply(self._target, ctcp_verb, argument=argument)
 
     def get_modes(self):
-        self.s.mode(self._source)
+        self.s.mode(self._target)
 
 
 class ServerConnected:
@@ -34,7 +34,7 @@ class ServerConnected:
         self.s = server_connection
 
 
-class User(ServerConnected, SourceableUserChan):
+class User(ServerConnected, TargetableUserChan):
     """An IRC user."""
 
     def __init__(self, server_connection, nickmask):
@@ -45,7 +45,7 @@ class User(ServerConnected, SourceableUserChan):
         self.user = user.user
         self.host = user.host
 
-        self._source = self.nick
+        self._target = self.nick
 
         self.channel_names = self.s.ilist()
 
@@ -72,7 +72,7 @@ class User(ServerConnected, SourceableUserChan):
         return '{}!{}@{}'.format(self.nick, self.user, self.host)
 
 
-class Channel(ServerConnected, SourceableUserChan):
+class Channel(ServerConnected, TargetableUserChan):
     """An IRC channel."""
 
     def __init__(self, server_connection, name):
@@ -81,7 +81,7 @@ class Channel(ServerConnected, SourceableUserChan):
         self.name = name
         self.joined = False  # whether we are joined to this channel
 
-        self._source = self.name
+        self._target = self.name
 
         self._user_nicks = []
         self.prefixes = {}
@@ -109,7 +109,7 @@ class Channel(ServerConnected, SourceableUserChan):
 class Server(ServerConnected):
     """An IRC server."""
 
-    def __init__(self, server_connection,name):
+    def __init__(self, server_connection, name):
         super().__init__(server_connection)
 
         self.name = name
