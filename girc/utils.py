@@ -2,6 +2,7 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 import collections
+import string
 
 
 def parse_modes(params, mode_types=None):
@@ -15,7 +16,7 @@ def parse_modes(params, mode_types=None):
         raise Exception('first param must start with + or -')
 
     if mode_types is None:
-        mode_types = ['','','','']
+        mode_types = ['', '', '', '']
 
     mode_string = params.pop(0)
     args = params
@@ -28,8 +29,7 @@ def parse_modes(params, mode_types=None):
             continue
 
         if (char in mode_types[0] or char in mode_types[1] or
-            (char in mode_types[2] and direction == '+')
-            and len(args)):
+            (char in mode_types[2] and direction == '+') and len(args)):
                 value = args.pop(0)
         else:
             value = None
@@ -40,6 +40,8 @@ def parse_modes(params, mode_types=None):
 
 
 class NickMask:
+    """An IRC nickmask."""
+
     def __init__(self, mask):
         self.nick = ''
         self.user = ''
@@ -67,10 +69,11 @@ class NickMask:
 
 # just a custom casefolding list, designed for things like lists of keys
 class CaseInsensitiveList(collections.MutableSequence):
+
     @staticmethod
     def _check_value(value):
         if not isinstance(value, object):
-           raise TypeError()
+            raise TypeError()
 
     def __init__(self, data=None):
         self.__store = []
@@ -132,7 +135,6 @@ class CaseInsensitiveList(collections.MutableSequence):
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import time
 
 class CaseInsensitiveDict(collections.MutableMapping):
     """
@@ -156,6 +158,7 @@ class CaseInsensitiveDict(collections.MutableMapping):
     operations are given keys that have equal ``.casefold()``s, the
     behavior is undefined.
     """
+
     def __init__(self, data=None, **kwargs):
         self._store = dict()
         if data is None:
@@ -204,9 +207,9 @@ class CaseInsensitiveDict(collections.MutableMapping):
 
 
 # hostname code from mammon-ircd
-import string
 hostname_allowed_chars = string.ascii_letters + string.digits + '-'
 hostname_allowed_chars_tbl = str.maketrans('', '', hostname_allowed_chars)
+
 
 def validate_hostname(hostname):
     if hostname.endswith('.'):

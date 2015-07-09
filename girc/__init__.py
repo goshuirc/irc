@@ -12,6 +12,7 @@ loop = asyncio.get_event_loop()
 
 class Reactor:
     """Manages IRC connections."""
+
     def __init__(self):
         self.servers = CaseInsensitiveDict()
         self._connect_info = CaseInsensitiveDict()
@@ -28,8 +29,11 @@ class Reactor:
     def connect_to_server(self, server_name, *args, **kwargs):
         self._connect_info[server_name] = {}
 
-        connection = loop.create_connection(functools.partial(ServerConnection, name=server_name, reactor=self), *args, **kwargs)
-        t = asyncio.Task(connection)
+        connection = loop.create_connection(functools.partial(ServerConnection,
+                                                              name=server_name,
+                                                              reactor=self),
+                                            *args, **kwargs)
+        asyncio.Task(connection)
 
     def _append_server(self, server):
         self.servers[server.name] = server
@@ -37,7 +41,8 @@ class Reactor:
         # register cached events
         for verb, infos in self._event_handlers.items():
             for info in infos:
-                server.register_event(info['direction'], verb, info['handler'], priority=info['priority'])
+                server.register_event(info['direction'], verb, info['handler'],
+                                      priority=info['priority'])
 
         # setting connect info
         info = self._connect_info[server.name]

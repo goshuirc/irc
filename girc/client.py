@@ -11,14 +11,15 @@ from .features import Features
 from .formatting import unescape
 from .info import Info
 from .imapping import IDict, IList, IString
-from .events import numerics, message_to_event
+from .events import message_to_event
 from .utils import validate_hostname
 
 loop = asyncio.get_event_loop()
 
 
-
 class ServerConnection(asyncio.Protocol):
+    """Manages a connection to a single server."""
+
     def __init__(self, name=None, reactor=None):
         self.connected = False
         self.ready = False
@@ -124,7 +125,8 @@ class ServerConnection(asyncio.Protocol):
     # protocol connect / disconnect
     def connection_made(self, transport):
         if not self.nick:
-            raise Exception('Nick not found. User info must be set with set_user_info() before connecting')
+            raise Exception('Nick not found. User info must be set with set_user_info()'
+                            'before connecting')
             self.exit()
             return
 

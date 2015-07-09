@@ -10,6 +10,7 @@ reactor.connect_to_server('local', '127.0.0.1', 6667)
 reactor.set_user_info('local', 'goshu', user='n')
 reactor.join_channels('local', '#services', '#a', '#testchan')
 
+
 @reactor.handler('in', 'raw', priority=1)
 def handle_raw_in(event):
     print(event['server'].name, ' ->', escape(event['data']))
@@ -28,6 +29,7 @@ def handle_hi(event):
 def handle_ctcp(event):
     if event['ctcp_verb'] == 'version':
         event['source'].ctcp_reply('VERSION', 'girc test bot:git:python')
+
 
 print('Connecting')
 try:

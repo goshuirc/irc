@@ -24,6 +24,7 @@ def limit_to_number(limit):
 
 class Features:
     """Ingests sets of ISUPPORT features and provides access to them."""
+
     def __init__(self, server_connection):
         self.available = CaseInsensitiveDict()
         self.s = server_connection

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from functools import partial
 import collections
 import encodings.idna
 
 
 class IMap:
     """Base object for supporting IRC casemapping."""
+
     def __init__(self):
         self._std = None
 
@@ -55,6 +57,7 @@ class IMap:
 
 class IDict(collections.MutableMapping, IMap):
     """Case-insensitive IRC dict, based on IRC casemapping standards."""
+
     def __init__(self, data={}, *args, **kwargs):
         self.store = dict()
         IMap.__init__(self)
@@ -97,6 +100,7 @@ class IDict(collections.MutableMapping, IMap):
 
 class IList(collections.MutableSequence, IMap):
     """Case-insensitive IRC list, based on IRC casemapping standards."""
+
     def __init__(self, data=[], *args):
         self.store = list()
         IMap.__init__(self)
@@ -163,7 +167,7 @@ class IList(collections.MutableSequence, IMap):
 
 class IString(str, IMap):
     """Case-insensitive IRC string (for channel/usernames), based on IRC casemapping standards."""
-    # upperlower
+
     def lower(self):
         new_string = IString(self._irc_lower(self))
         new_string.set_std(self._std)
@@ -222,7 +226,8 @@ class IString(str, IMap):
         return hash(str(self._irc_lower(self)))
 
     # str methods
-    # this is so we can just do normal .title() / .split() / .etc calls as though IString were a str class
+    # this is so we can just do normal .title() / .split() / .etc calls
+    #   as though IString were a normal str class
     def __getattribute__(self, name):
         f = str.__getattribute__(self, name)
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
-from .events import message_to_event
 from .types import User, Channel, Server
 from .utils import NickMask, CaseInsensitiveDict
 
@@ -27,6 +26,7 @@ class Info:
     and networks generally don't have a million servers, so we shouldn't need
     to worry about deleting these.
     """
+
     def __init__(self, server_connection):
         self.s = server_connection
 

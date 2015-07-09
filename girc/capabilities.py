@@ -6,6 +6,7 @@ from .utils import CaseInsensitiveDict, CaseInsensitiveList
 
 class Capabilities:
     """Ingests sets of client capabilities and provides access to them."""
+
     def __init__(self, wanted=[]):
         self.available = CaseInsensitiveDict()
         self.wanted = CaseInsensitiveList(wanted)

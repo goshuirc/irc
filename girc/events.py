@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
-from .formatting import escape, unescape
+from .formatting import escape
 from .utils import NickMask, parse_modes
 
 NAME_ATTR = 0

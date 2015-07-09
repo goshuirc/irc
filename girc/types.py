@@ -7,6 +7,7 @@ from .utils import NickMask
 
 class SourceableUserChan:
     """Provides events that can originate from a user or a channel."""
+
     def msg(self, message, formatted=True, tags=None):
         self.s.msg(self._source, message, formatted=formatted, tags=tags)
 
@@ -28,12 +29,14 @@ class SourceableUserChan:
 
 class ServerConnected:
     """Something that's connected to an IRC server."""
+
     def __init__(self, server_connection):
         self.s = server_connection
 
 
 class User(ServerConnected, SourceableUserChan):
     """An IRC user."""
+
     def __init__(self, server_connection, nickmask):
         super().__init__(server_connection)
 
@@ -67,10 +70,11 @@ class User(ServerConnected, SourceableUserChan):
     @property
     def nickmask(self):
         return '{}!{}@{}'.format(self.nick, self.user, self.host)
-    
+
 
 class Channel(ServerConnected, SourceableUserChan):
     """An IRC channel."""
+
     def __init__(self, server_connection, name):
         super().__init__(server_connection)
 
@@ -103,6 +107,8 @@ class Channel(ServerConnected, SourceableUserChan):
 
 
 class Server(ServerConnected):
+    """An IRC server."""
+
     def __init__(self, server_connection,name):
         super().__init__(server_connection)
 
