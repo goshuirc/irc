@@ -6,9 +6,10 @@ from girc.formatting import escape
 
 reactor = girc.Reactor()
 
-reactor.connect_to_server('local', '127.0.0.1', 6667)
+reactor.create_server('local', '127.0.0.1', 6667)
 reactor.set_user_info('local', 'goshu', user='n')
 reactor.join_channels('local', '#services', '#a', '#testchan')
+reactor.connect_to('local')
 
 
 @reactor.handler('in', 'raw', priority=1)
