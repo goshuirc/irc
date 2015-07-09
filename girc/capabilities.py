@@ -4,6 +4,26 @@
 from .utils import CaseInsensitiveDict, CaseInsensitiveList
 
 
+def cap_list(caps):
+    """Given a cap string, return a list of cap, value."""
+    out = []
+    caps = caps.split()
+
+    for cap in caps:
+        # strip first initial =/~
+        if cap.startswith('=') or cap.startswith('~'):
+            cap = cap[1:]
+
+        if '=' in cap:
+            cap, value = cap.rsplit('=', 1)
+        else:
+            value = True
+
+        out.append([cap, value])
+
+    return out
+
+
 class Capabilities:
     """Ingests sets of client capabilities and provides access to them."""
 
@@ -16,21 +36,18 @@ class Capabilities:
         cmd = cmd.casefold()
 
         if cmd == 'ls':
-            caps = parameters[0].split(' ')
-
-            for cap in caps:
-                # strip first initial =/~
-                if cap.startswith('=') or cap.startswith('~'):
-                    cap = cap[1:]
-
-                if '=' in cap:
-                    cap, value = cap.rsplit('=', 1)
-                    if value == '':
-                        value = None
-                else:
-                    value = True
-
+            for cap, value in cap_list(parameters[0]):
                 self.available[cap] = value
+
+        elif cmd == 'ack':
+            for cap, value in cap_list(parameters[0]):
+                if cap not in self.enabled:
+                    self.enabled.append(cap)
+
+        elif cmd == 'nak':
+            for cap, value in cap_list(parameters[0]):
+                if cap in self.enabled:
+                    self.enabled.remove(cap)
 
     @property
     def to_enable(self):
