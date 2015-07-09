@@ -12,7 +12,7 @@ INFO_ATTR = 1
 #   before being set
 # the params 'source' and 'target' will be converted to Client,
 #   Channel, or Server objects in the event dict
-verb_param_map = {
+_verb_param_map = {
     'target': {
         0: (
             'privmsg', 'pubmsg', 'notice', 'ctcp',
@@ -163,11 +163,13 @@ def message_to_event(direction, message):
         infos = ctcp_unpack_message(info)
 
     # work on each info object separately
-    for i in range(len(infos)):
+    i = -1
+    while i < (len(infos) - 1):
+        i += 1
         name = infos[i][NAME_ATTR]
 
         # standard message attributes
-        for attr, param_map in verb_param_map.items():
+        for attr, param_map in _verb_param_map.items():
             # escaping
             escaped = False
             if attr.startswith('escaped_'):
@@ -175,13 +177,19 @@ def message_to_event(direction, message):
                 escaped = True
 
             for param_number, verbs in param_map.items():
-                if len(infos[i][INFO_ATTR]['params']) > param_number and verb in verbs:
+                if len(infos[i][INFO_ATTR]['params']) > param_number and name in verbs:
                     value = infos[i][INFO_ATTR]['params'][param_number]
                     if escaped:
                         value = escape(value)
                     infos[i][INFO_ATTR][attr] = value
 
         # custom message attributes
+        if name == 'ctcp':
+            if infos[i][INFO_ATTR]['ctcp_verb'] == 'action':
+                info = dict(infos[i][INFO_ATTR])
+                info['message'] = info['ctcp_text']
+                infos.append(['action', info])
+
         if name == 'umode' and len(infos[i][INFO_ATTR]['params']) > 1:
             infos[i][INFO_ATTR]['modes'] = parse_modes(infos[i][INFO_ATTR]['params'][1:])
 
