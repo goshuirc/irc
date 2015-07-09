@@ -214,17 +214,23 @@ class ServerConnection(asyncio.Protocol):
 
         self.send('NOTICE', params=[target, message], source=self.nick, tags=tags)
 
-    def ctcp(self, target, message):
+    def ctcp(self, target, ctcp_verb, argument=None):
         """Send a CTCP to the given target."""
         # we don't support complex ctcp encapsulation because we're somewhat sane
+        atoms = [ctcp_verb]
+        if argument is not None:
+            atoms.append(argument)
         X_DELIM = '\x01'
-        self.msg(target, X_DELIM + message + X_DELIM, formatted=False)
+        self.msg(target, X_DELIM + ' '.join(atoms) + X_DELIM, formatted=False)
 
-    def ctcp_reply(self, target, message):
-        """Send a CTCP to the given target."""
+    def ctcp_reply(self, target, ctcp_verb, argument=None):
+        """Send a CTCP reply to the given target."""
         # we don't support complex ctcp encapsulation because we're somewhat sane
+        atoms = [ctcp_verb]
+        if argument is not None:
+            atoms.append(argument)
         X_DELIM = '\x01'
-        self.notice(target, X_DELIM + message + X_DELIM, formatted=False)
+        self.notice(target, X_DELIM + ' '.join(atoms) + X_DELIM, formatted=False)
 
     def join_channel(self, channel, key=None):
         """Join the given channel."""

@@ -27,7 +27,7 @@ def handle_hi(event):
 @reactor.handler('in', 'ctcp')
 def handle_ctcp(event):
     if event['ctcp_verb'] == 'version':
-        event['source'].ctcp_reply('VERSION girc test bot:git:python')
+        event['source'].ctcp_reply('VERSION', 'girc test bot:git:python')
 
 print('Connecting')
 try:
