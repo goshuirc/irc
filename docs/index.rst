@@ -37,6 +37,7 @@ Library
 
    library/reactor
    library/serverconnection
+   library/formatting
 
 
 DevNotes

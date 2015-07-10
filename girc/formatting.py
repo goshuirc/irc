@@ -103,7 +103,7 @@ def extract_girc_colours(msg, fill_last):
 
 
 def escape(msg):
-    """Return an escaped message."""
+    """Takes a raw IRC message and returns a girc-escaped message."""
     msg = msg.replace(escape_character, 'girc-escaped-character')
     for escape_key, irc_char in format_dict.items():
         msg = msg.replace(irc_char, escape_character + escape_key)
@@ -130,7 +130,7 @@ def escape(msg):
 
 
 def unescape(msg):
-    """Take an escaped message and return an unescaped result."""
+    """Takes a girc-escaped message and returns a raw IRC message"""
     new_msg = ''
 
     while len(msg):

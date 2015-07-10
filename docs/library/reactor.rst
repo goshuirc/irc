@@ -10,9 +10,19 @@ This class is the way you create and manage IRC connections. It lets you create 
 .. automethod:: girc.Reactor.close
 
 
+Making connections
+------------------
+
+These functions let you make and manage connections to IRC servers.
+
 .. automethod:: girc.Reactor.create_server
 
 .. automethod:: girc.Reactor.set_user_info
+
+.. automethod:: girc.Reactor.connect_to
+
+    This method should be called once the necessary user info is set using
+    :meth:`girc.Reactor.set_user_info`
 
 .. automethod:: girc.Reactor.join_channels
 
@@ -21,5 +31,3 @@ This class is the way you create and manage IRC connections. It lets you create 
     .. code-block:: python
 
         reactor.join_channels('testnet', '#example', '#cool')
-
-.. automethod:: girc.Reactor.connect_to
