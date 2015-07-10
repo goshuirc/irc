@@ -22,3 +22,15 @@ Sending Messages
 These are the main ways you'll interact with the server directly. It lets you send IRC messages directly to the server using a general sending function, as well as convenience methods for specific messages:
 
 .. automethod:: girc.client.ServerConnection.send
+
+.. automethod:: girc.client.ServerConnection.msg
+
+.. automethod:: girc.client.ServerConnection.notice
+
+.. automethod:: girc.client.ServerConnection.ctcp
+
+.. automethod:: girc.client.ServerConnection.ctcp_reply
+
+.. automethod:: girc.client.ServerConnection.mode
+
+.. automethod:: girc.client.ServerConnection.join_channel
