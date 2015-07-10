@@ -110,36 +110,15 @@ todo_include_todos = False
 
 # -- Options for HTML output ----------------------------------------------
 
-import sphinx_py3doc_enhanced_theme
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-html_theme = "sphinx_py3doc_enhanced_theme"
-html_theme_path = [sphinx_py3doc_enhanced_theme.get_html_theme_path()]
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-html_theme_options = {
-    'bodyfont': '\'Lucida Grande\', Arial, sans-serif',
-    'headfont': '\'Lucida Grande\', Arial, sans-serif',
-    'footerbgcolor': 'white',
-    'footertextcolor': '#555555',
-    'relbarbgcolor': 'white',
-    'relbartextcolor': '#666666',
-    'relbarlinkcolor': '#444444',
-    'sidebarbgcolor': 'white',
-    'sidebartextcolor': '#444444',
-    'sidebarlinkcolor': '#444444',
-    'bgcolor': 'white',
-    'textcolor': '#222222',
-    'linkcolor': '#0072AA',
-    'visitedlinkcolor': '#6363bb',
-    'headtextcolor': '#1a1a1a',
-    'headbgcolor': 'white',
-    'headlinkcolor': '#aaaaaa',
-    'headshadow': False,
-    'codeshadow': False,
-    'newstylecode': False,
-    'highlightcurrent': False,
-    'codeclassname_bold': False,
-    'headercode_bold': False,
-}
+# otherwise, readthedocs.org uses their theme by default, so no need to specify it
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
