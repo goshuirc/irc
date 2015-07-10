@@ -166,8 +166,8 @@ class ServerConnection(asyncio.Protocol):
     def send(self, verb, params=None, source=None, tags=None):
         """Send a generic IRC message to the server.
 
-        After specifying the various parts of the message, it gets assembled and sent to
-        the server.
+        A message is created using the various parts of the message, then gets
+        assembled and sent to the server.
 
         Args:
             verb (str): Verb, such as PRIVMSG.
@@ -231,7 +231,7 @@ class ServerConnection(asyncio.Protocol):
 
     # commands
     def msg(self, target, message, formatted=True, tags=None):
-        """Message the given target."""
+        """Send a privmsg to the given target."""
         if formatted:
             message = unescape(message)
 
@@ -245,7 +245,7 @@ class ServerConnection(asyncio.Protocol):
         self.send('NOTICE', params=[target, message], source=self.nick, tags=tags)
 
     def ctcp(self, target, ctcp_verb, argument=None):
-        """Send a CTCP to the given target."""
+        """Send a CTCP request to the given target."""
         # we don't support complex ctcp encapsulation because we're somewhat sane
         atoms = [ctcp_verb]
         if argument is not None:
@@ -270,7 +270,7 @@ class ServerConnection(asyncio.Protocol):
         self.send('JOIN', params=params)
 
     def mode(self, target, mode_string=None, tags=None):
-        """Modes the given target."""
+        """Sends new modes to or requests existing modes from the given target."""
         params = [target]
         if mode_string:
             params += mode_string
