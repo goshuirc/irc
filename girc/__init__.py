@@ -19,14 +19,28 @@ class Reactor:
         self._event_handlers = {}
 
     # start and stop
-    def start(self):
+    def run_forever(self):
+        """Start running the reactor. This should run forever."""
         loop.run_forever()
 
     def close(self):
+        """Close the reactor, to be called after :meth:`girc.Reactor.run_forever` returns."""
         loop.close()
 
     # setting connection info
     def create_server(self, server_name, *args, **kwargs):
+        """Create an IRC server connection slot.
+
+        The server will actually be connected to when :meth:`girc.Reactor.connect_to` is called
+        later.
+
+        Args:
+            server_name (str): Name of the server, to be used for functions and accessing the
+                server later through the reactor.
+
+        Other arguments to this function are to be supplied as for
+        :meth:`asyncio.BaseEventLoop.create_connection`.
+        """
         self._connect_info[server_name] = {
             'connection': {
                 'args': args,
@@ -34,22 +48,48 @@ class Reactor:
             }
         }
 
-    def set_user_info(self, server_name, *args, **kwargs):
+    def set_user_info(self, server_name, nick, user='*', real='*'):
+        """Sets user info for a server, before connection.
+
+        Args:
+            server_name (str): Name of the server to set user info on.
+            nick (str): Nickname to use.
+            user (str): Username to use.
+            real (str): Realname to use.
+        """
         if server_name in self.servers:
             raise Exception('Cannot set user info now, server already exists!')
+
+        # assemble args and kwargs for connect_info later
+        args = [nick]
+        kwargs = {
+            'user': user,
+            'real': real,
+        }
 
         # server will pickup list when they exist
         self._connect_info[server_name]['user_info'] = [args, kwargs]
 
-    def join_channels(self, server_name, *chans):
+    def join_channels(self, server_name, *channels):
+        """Joins the supplied channels, or queues them for when server connects.
+
+        Args:
+            server_name (str): Name of the server to set user info on.
+            channels (strings): Channel names to join.
+        """
         if server_name in self.servers:
-            self.servers[server_name].join_channels(*chans)
+            self.servers[server_name].join_channels(*channels)
         else:
             # server will pickup list when they exist
-            self._connect_info[server_name]['autojoin_channels'] = chans
+            self._connect_info[server_name]['autojoin_channels'] = channels
 
     # connecting
     def connect_to(self, server_name):
+        """Connects to the given server, using details specified above.
+
+        Args:
+            server_name (str): Name of the server to connect to.
+        """
         # confirm we have user info set
         if 'user_info' not in self._connect_info[server_name]:
             raise Exception('`set_user_info` must be called before connecting to server.')

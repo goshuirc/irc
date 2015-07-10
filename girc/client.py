@@ -102,6 +102,13 @@ class ServerConnection(asyncio.Protocol):
                 obj.set_std(casemap)
 
     def istring(self, in_string=''):
+        """Return a string that uses this server's IRC casemapping.
+
+        This string's equality with other strings, ``lower()``, and ``upper()`` takes this
+        server's casemapping into account. This should be used for things such as nicks and
+        channel names, where comparing strings using the correct casemapping can be very
+        important.
+        """
         new_string = IString(in_string)
         new_string.set_std(self.features.get('casemapping'))
         if not self._casemap_set:
@@ -109,6 +116,11 @@ class ServerConnection(asyncio.Protocol):
         return new_string
 
     def ilist(self, in_list=[]):
+        """Return a list that uses this server's IRC casemapping.
+
+        All strings in this list are lowercased using the server's casemapping before inserting
+        them into the list, and the ``in`` operator takes casemapping into account.
+        """
         new_list = IList(in_list)
         new_list.set_std(self.features.get('casemapping'))
         if not self._casemap_set:
@@ -116,6 +128,10 @@ class ServerConnection(asyncio.Protocol):
         return new_list
 
     def idict(self, in_dict={}):
+        """Return a dict that uses this server's IRC casemapping.
+
+        All keys in this dictionary are stored and compared using this server's casemapping.
+        """
         new_dict = IDict(in_dict)
         new_dict.set_std(self.features.get('casemapping'))
         if not self._casemap_set:
@@ -148,6 +164,18 @@ class ServerConnection(asyncio.Protocol):
 
     # protocol send / receive
     def send(self, verb, params=None, source=None, tags=None):
+        """Send a generic IRC message to the server.
+
+        After specifying the various parts of the message, it gets assembled and sent to
+        the server.
+
+        Args:
+            verb (str): Verb, such as PRIVMSG.
+            params (list of str): Message parameters, defaults to no params.
+            source (str): Source of the message, defaults to no source.
+            tags (dict): `Tags <http://ircv3.net/specs/core/message-tags-3.2.html>`_
+                to send with the message.
+        """
         m = RFC1459Message.from_data(verb, params=params, source=source, tags=tags)
         self._send_message(m)
 

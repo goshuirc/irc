@@ -37,7 +37,7 @@ def handle_ctcp(event):
 
 print('Connecting')
 try:
-    reactor.start()
+    reactor.run_forever()
 except KeyboardInterrupt:
     pass
 

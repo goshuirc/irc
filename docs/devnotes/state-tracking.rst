@@ -1,6 +1,8 @@
 State Tracking
 ==============
-This is a devnote, or a document I've written up while developing gIRC to keep track of why I've made certain decisions. This probably won't be useful to you unless you plan to hack on gIRC.
+
+.. note::
+    This is a devnote, or a document I've written up while developing girc to keep track of why I've made certain decisions. This probably won't be useful to you unless you plan to hack on girc.
 
 There are two main ways we can track state and pass users/channels through our event dispatching system.
 
