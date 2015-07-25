@@ -11,15 +11,15 @@ class Info:
     This is where we differ from most other libraries. We store information for
     clients, users, and servers as ``girc.types.*`` objects. We pass these
     objects around directly in the Event dictionaries as they are dispatched.
-    The reasons we do this are detailed in the State Tracking dev note (in the
-    docs directory).
+    The reasons we do this are detailed in the State Tracking devnote in our
+    documentation.
 
     The ``channels`` dict should only contain channels we are joined to.
     We should not keep track of information for channels we have parted.
 
     The ``users`` dict should only contain users we share channels with, or
     have sent us messages / commands. If we do not share a channel with a user,
-    they may be removed from here.
+    they may be removed from here at any time.
 
     The ``servers`` dict will contain all the servers we have received
     communications from in the past. We don't store much info for each server,
