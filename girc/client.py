@@ -146,7 +146,10 @@ class ServerConnection(asyncio.Protocol):
             self.exit()
             return
 
-        peername, port = transport.get_extra_info('peername')
+        # we do this because IPv6 returns a 4-length tuple
+        extra_info = transport.get_extra_info('peername')
+        peername, port = extra_info[:2]
+
         print('Connected to {}'.format(peername))
         self.transport = transport
         self.connected = True
