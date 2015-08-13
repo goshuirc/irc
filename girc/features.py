@@ -36,7 +36,12 @@ class Features:
 
         # casemapping is a special case
         # we want to avoid calling set_casemapping below
-        self.available['casemapping'] = 'rfc1459'
+
+        # default to ascii because ascii will not munge things if we end up with
+        #   rfc1459 instead. if we defauled to rfc1459 and ended up with ascii,
+        #   names could already be munged without us being able to revert them
+        # ditto for ascii vs rfc3454
+        self.available['casemapping'] = 'ascii'
 
     def _simplify_feature_value(self, feature, value):
         """Split up features and return a human-readable value."""

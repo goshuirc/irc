@@ -4,6 +4,7 @@
 from functools import partial
 import collections
 import encodings.idna
+import string
 
 
 class IMap:
@@ -20,15 +21,23 @@ class IMap:
 
     def _set_transmaps(self):
         """Set translation maps for our standard."""
-        if self._std == 'rfc1459':
-            self._lower_chars = ''.join(chr(i) for i in range(91, 95))
-            self._upper_chars = ''.join(chr(i) for i in range(123, 127))
+        if self._std == 'ascii':
+            self._lower_chars = string.ascii_lowercase
+            self._upper_chars = string.ascii_upper
+
+        elif self._std == 'rfc1459':
+            self._lower_chars = (string.ascii_lowercase +
+                                 ''.join(chr(i) for i in range(91, 95)))
+            self._upper_chars = (string.ascii_upper +
+                                 ''.join(chr(i) for i in range(123, 127)))
 
         elif self._std == 'rfc1459-strict':
-            self._lower_chars = ''.join(chr(i) for i in range(91, 94))
-            self._upper_chars = ''.join(chr(i) for i in range(123, 126))
+            self._lower_chars = (string.ascii_lowercase +
+                                 ''.join(chr(i) for i in range(91, 94)))
+            self._upper_chars = (string.ascii_upper +
+                                 ''.join(chr(i) for i in range(123, 126)))
 
-        # ascii and rfc3454 don't need any special ones, handled by str.lower()
+        # rfc3454 handled by nameprep function
 
     def set_std(self, std):
         """Set the standard we'll be using (isupport CASEMAPPING)."""
