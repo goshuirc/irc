@@ -1,3 +1,4 @@
 -e git+https://github.com/mammon-ircd/ircreactor.git#egg=ircreactor
 docopt
 sphinx_py3doc_enhanced_theme
+coverage
