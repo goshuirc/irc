@@ -52,6 +52,9 @@ def ctcp_unpack_message(info):
     verb = info['verb']
     message = info['params'][1]
 
+    # NOTE: full CTCP dequoting and unpacking is not done here, only a subset
+    #   this is because doing the full thing breaks legitimate messages
+
     # basics
     infos = []
 
