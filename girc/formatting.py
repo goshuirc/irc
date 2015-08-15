@@ -24,7 +24,7 @@ colour_code_to_name = {
     10: 'cyan',
     11: 'light cyan',
     12: 'light blue',
-    13: 'light magenta',
+    13: 'pink',
     14: 'grey',
     15: 'light grey',
 }
