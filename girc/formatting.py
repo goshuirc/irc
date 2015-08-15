@@ -41,7 +41,7 @@ def _ctos(colour_code):
     if code in colour_code_to_name:
         return colour_code_to_name[code]
     else:
-        return 'unknown:' + code
+        return 'unknown: {}'.format(code)
 
 
 def _extract_irc_colour_code(msg):
@@ -89,6 +89,9 @@ def extract_girc_colours(msg, fill_last):
 
     If `fill_last`, last number must be zero-padded.
     """
+    if not len(msg):
+        return '', ''
+
     colours, msg = msg.split(']', 1)
     colours = colours.lstrip('[')
 
