@@ -2,6 +2,7 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 import asyncio
+import base64
 
 from ircreactor.events import EventManager
 from ircreactor.envelope import RFC1459Message
@@ -22,6 +23,7 @@ class ServerConnection(asyncio.Protocol):
 
     def __init__(self, name=None, reactor=None):
         self.connected = False
+        self.registered = False
         self.ready = False
         self._events_in = EventManager()
         self._events_out = EventManager()
@@ -69,6 +71,9 @@ class ServerConnection(asyncio.Protocol):
         self.register_event('both', 'endofmotd', self.rpl_endofmotd)
         self.register_event('both', 'nomotd', self.rpl_endofmotd)
         self.register_event('both', 'ping', self.rpl_ping)
+
+        # sasl stuff
+        self.register_event('in', 'authenticate', self.rpl_authenticate)
 
         self.reactor = reactor
         self.reactor._append_server(self)
@@ -287,22 +292,36 @@ class ServerConnection(asyncio.Protocol):
 
         self.capabilities.ingest(subcmd, event['params'])
 
-        if self.ready:
-            return
+        # registration
+        if subcmd in ['ack', 'nak'] and not self.registered:
+            if 'sasl' in self.capabilities.enabled and self._sasl_info:
+                self.start_sasl()
+            else:
+                self.send('CAP', params=['END'])
+                self.send_welcome()
 
+        # enable caps we want
         if subcmd == 'ls':
             caps_to_enable = self.capabilities.to_enable
-            self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
-        elif subcmd == 'ack':
-            self.send('CAP', params=['END'])
-            self.send_welcome()
-        elif subcmd == 'nak':
-            self.send('CAP', params=['END'])
-            self.send_welcome()
+            if caps_to_enable:
+                self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
 
     def send_welcome(self):
         self.send('NICK', params=[self.nick])
         self.send('USER', params=[self.user, '*', '*', self.real])
+        self.registered = True
+
+    def rpl_authenticate(self, event):
+        if self._sasl_info['method'].casefold() == 'plain':
+            username = self._sasl_info['username']
+            password = self._sasl_info['password']
+            identity = self._sasl_info['identity']
+
+            reply = base64.b64encode(bytes(identity) + b'\x00' +
+                                     bytes(username) + b'\x00' +
+                                     bytes(password))
+
+        self.send('AUTHENTICATE', reply)
 
     def rpl_features(self, event):
         # last param is 'are supported by this server' text, so we ignore it
@@ -351,3 +370,34 @@ class ServerConnection(asyncio.Protocol):
                 params.append(key)
 
             self.join_channel(channel, key=key)
+
+    def start_sasl(self):
+        # only start if we have enabled SASL
+        if 'sasl' not in self.capabilities.enabled:
+            return False
+
+        method = self._sasl_info['method']
+
+        self.send('AUTHENTICATE', params=[method.upper()])
+        return True
+
+    def sasl(self, method, *args):
+        self._sasl_info = {
+            'method': method,
+        }
+        if method.casefold() == 'plain':
+            name = args.pop(0)
+            password = args.pop(0)
+            if len(args):
+                identity = args.pop(0)
+            else:
+                identity = name
+
+            self._sasl_info['name'] = name
+            self._sasl_info['password'] = password
+            self._sasl_info['identity'] = identity
+
+        if not self.ready:
+            return True
+
+        return self.start_sasl(method)

@@ -12,7 +12,10 @@ Usage:
     test.py (-h | --help)
 
 Options:
-    --nick=<nick>   Nick to connect with [default: girc].
+    --nick=<nick>        Nick to connect with [default: girc].
+    --sasl-name=<name>   SASL name to authenticate with (PLAIN).
+    --sasl-pass=<pass>   SASL password to authenticate with (PLAIN).
+
     --host=<host>   Host for the bot to connect to [default: localhost].
     --port=<port>   Port for the bot to connect to [default: 6667].
     --ssl           Connect via SSL.
@@ -68,8 +71,28 @@ if __name__ == '__main__':
         use_ipv4 = arguments['--ipv4']
         use_ipv6 = arguments['--ipv6']
 
-        print('Connecting to {h}:{p}'.format(h=host, p=port))
+        sasl_name = arguments['--sasl-name']
+        sasl_pass = arguments['--sasl-pass']
 
+        # let user know what we're doing
+        using = []
+        if use_ssl:
+            using.append('SSL')
+        if use_ipv6:
+            using.append('IPv6')
+        elif use_ipv4:
+            using.append('IPv4')
+        if sasl_name and sasl_pass:
+            using.append('SASL PLAIN (if advertised)')
+
+        if using:
+            using = 'with {}'.format(', '.join(using))
+        else:
+            using = ''
+
+        print('Connecting to {h}:{p}'.format(h=host, p=port), using)
+
+        # join
         if arguments['--ipv6']:
             family = socket.AF_INET6
         elif arguments['--ipv4']:
@@ -79,6 +102,8 @@ if __name__ == '__main__':
 
         reactor.create_server('local', host, port, ssl=use_ssl, family=family)
         reactor.set_user_info('local', nick, user=nick)
+        if sasl_name and sasl_pass:
+            reactor.sasl_plain('local', sasl_name, sasl_pass)
         reactor.join_channels('local', *channels)
         reactor.connect_to('local')
 

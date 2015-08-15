@@ -70,6 +70,24 @@ class Reactor:
         # server will pickup list when they exist
         self._connect_info[server_name]['user_info'] = [args, kwargs]
 
+    def sasl_plain(self, server_name, name, password, identity=None):
+        """Authenticate to a server using SASL plain, or does so on connection.
+
+        Args:
+            server_name (str): Name of the server to set user info on.
+            name (str): Name to auth with.
+            password (str): Password to auth with.
+            identity (str): Identity to auth with (defaults to name).
+        """
+        if identity is None:
+            identity = name
+
+        if server_name in self.servers:
+            self.servers[server_name].sasl_plain(name, password, identity=identity)
+        else:
+            # server will authenticate when they exist
+            self._connect_info[server_name]['sasl'] = ['plain', name, password, identity]
+
     def join_channels(self, server_name, *channels):
         """Joins the supplied channels, or queues them for when server connects.
 
@@ -122,6 +140,12 @@ class Reactor:
         if 'user_info' in info:
             args, kwargs = info['user_info']
             server.set_user_info(*args, **kwargs)
+
+        if 'sasl' in info:
+            args = info['sasl']
+            method = args.pop(0)
+
+            server.sasl(method, *args)
 
         if 'autojoin_channels' in info:
             chans = info['autojoin_channels']
