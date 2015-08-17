@@ -33,12 +33,18 @@ class ServerConnected:
     def __init__(self, server_connection):
         self.s = server_connection
 
+        self.is_user = False
+        self.is_channel = False
+        self.is_server = False
+
 
 class User(ServerConnected, TargetableUserChan):
     """An IRC user."""
 
     def __init__(self, server_connection, nickmask):
         super().__init__(server_connection)
+
+        self.is_user = True
 
         user = NickMask(nickmask)
         self.nick = user.nick
@@ -78,13 +84,15 @@ class Channel(ServerConnected, TargetableUserChan):
     def __init__(self, server_connection, name):
         super().__init__(server_connection)
 
+        self.is_channel = True
+
         self.name = name
         self.joined = False  # whether we are joined to this channel
 
         self._target = self.name
 
-        self._user_nicks = []
-        self.prefixes = {}
+        self._user_nicks = self.s.ilist()
+        self.prefixes = self.s.idict()
 
         self._init_modes()
 
@@ -105,11 +113,20 @@ class Channel(ServerConnected, TargetableUserChan):
 
         return userlist
 
+    def add_user(self, nick, prefixes=None):
+        """Add a user to our internal list of nicks."""
+        if nick not in self._user_nicks:
+            self._user_nicks.append(nick)
+
+        self.prefixes[nick] = prefixes
+
 
 class Server(ServerConnected):
     """An IRC server."""
 
     def __init__(self, server_connection, name):
         super().__init__(server_connection)
+
+        self.is_server = True
 
         self.name = name

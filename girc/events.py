@@ -241,7 +241,7 @@ def message_to_event(direction, message):
                 server.info.create_user(name)
                 user = server.info.users.get(nick)
                 channel_prefixes[user] = prefixes
-                channel.prefixes[nick] = prefixes
+                channel.add_user(nick, prefixes=prefixes)
 
             infos[i][INFO_ATTR]['users'] = ','.join(nice_names)
             infos[i][INFO_ATTR]['prefixes'] = channel_prefixes
