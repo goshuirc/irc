@@ -52,9 +52,9 @@ class IMap:
 
         # create translations
         if self._lower_chars:
-            self._lower_trans = str.maketrans(self._lower_chars, self._upper_chars)
+            self._lower_trans = str.maketrans(self._upper_chars, self._lower_chars)
         if self._upper_chars:
-            self._upper_trans = str.maketrans(self._upper_chars, self._lower_chars)
+            self._upper_trans = str.maketrans(self._lower_chars, self._upper_chars)
 
     def _translate(self, value):
         if self._std == 'rfc3454':
