@@ -274,6 +274,31 @@ def message_to_event(direction, message):
                 users.append(server.info.users.get(NickMask(user).nick))
             infos[i][INFO_ATTR]['users'] = users
 
+        # custom from_to attribute for ease in bots
+        verb = infos[i][INFO_ATTR]['verb']
+        dir = infos[i][INFO_ATTR]['direction']
+        source = infos[i][INFO_ATTR].get('source')
+        target = infos[i][INFO_ATTR].get('target')
+
+        if verb == 'privmsg':
+            if dir == 'in':
+                infos[i][INFO_ATTR]['from_to'] = source
+            elif dir == 'out':
+                infos[i][INFO_ATTR]['from_to'] = target
+        elif verb == 'pubmsg':
+            infos[i][INFO_ATTR]['from_to'] = target
+        elif verb == 'notice':
+            if dir == 'in':
+                if target and target.is_channel:
+                    infos[i][INFO_ATTR]['from_to'] = target
+                else:
+                    infos[i][INFO_ATTR]['from_to'] = source
+            elif dir == 'out':
+                infos[i][INFO_ATTR]['from_to'] = target
+
+        if 'from_to' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['from_to'].is_server:
+            del infos[i][INFO_ATTR]['from_to']
+
     return infos
 
 
