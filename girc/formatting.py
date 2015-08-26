@@ -92,6 +92,9 @@ def extract_girc_colours(msg, fill_last):
     if not len(msg):
         return '', ''
 
+    if ']' not in msg or not msg.startswith('['):
+        return '', msg
+
     original_msg = msg
 
     colours, msg = msg.split(']', 1)
