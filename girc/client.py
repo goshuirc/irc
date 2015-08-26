@@ -161,6 +161,13 @@ class ServerConnection(asyncio.Protocol):
 
         self.send('CAP LS', params=['302'])
 
+    def quit(self, message=None):
+        """Quit from the server."""
+        if message is None:
+            message = 'Quit'
+
+        self.send('QUIT', params=[message])
+
     def connection_lost(self, exc):
         if not self.connected:
             return

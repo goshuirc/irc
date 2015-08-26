@@ -23,6 +23,11 @@ class Reactor:
         """Start running the reactor. This should run forever."""
         loop.run_forever()
 
+    def shutdown(self, message=None):
+        """Shutdown with a message!"""
+        for name, server in self.servers.items():
+            server.quit(message)
+
     def close(self):
         """Close the reactor, to be called after :meth:`girc.Reactor.run_forever` returns."""
         loop.close()
