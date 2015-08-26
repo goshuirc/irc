@@ -174,8 +174,22 @@ class IList(collections.MutableSequence, IMap):
         self.store.reverse()
 
 
-class IString(str, IMap):
+class CarelessStr(str):
+    def __new__(cls, *args, **kwargs):
+        return super(CarelessStr, cls).__new__(cls, *args[:1])
+
+
+class IString(CarelessStr, IMap):
     """Case-insensitive IRC string (for channel/usernames), based on IRC casemapping."""
+
+    def __new__(cls, *args, **kwargs):
+        self = CarelessStr.__new__(IString, *args, **kwargs)
+        IMap.__init__(self)
+        return self
+
+    def __init__(self, *args, **kwargs):
+        self = CarelessStr.__new__(IString, *args, **kwargs)
+        IMap.__init__(self)
 
     def lower(self):
         new_string = IString(self._irc_lower(self))
