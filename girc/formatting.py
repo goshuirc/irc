@@ -138,9 +138,32 @@ def escape(msg):
     return new_msg
 
 
-def unescape(msg):
+def _get_from_format_dict(format_dict, key):
+    """Return a value from our format dict."""
+    if isinstance(format_dict[key], str):
+        return format_dict[key]
+    elif isinstance(format_dict[key], (list, tuple)):
+        fn_list = list(format_dict[key])
+        function = fn_list.pop(0)
+
+        if len(fn_list):
+            args = fn_list.pop(0)
+        else:
+            args = []
+
+        if len(fn_list):
+            kwargs = fn_list.pop(0)
+        else:
+            kwargs = {}
+
+        return function(*args, **kwargs)
+
+
+def unescape(msg, extra_format_dict={}):
     """Takes a girc-escaped message and returns a raw IRC message"""
     new_msg = ''
+
+    extra_format_dict.update(format_dict)
 
     while len(msg):
         char = msg[0]
@@ -148,12 +171,28 @@ def unescape(msg):
         if char == escape_character:
             escape_key = msg[0]
             msg = msg[1:]
+
             # we handle this character separately, otherwise we mess up and
             #   double escape characters while escaping and unescaping
             if escape_key == escape_character:
                 new_msg += escape_character
+
+            elif escape_key == '{':
+                buf = ''
+                new_char = ''
+                while True:
+                    new_char = msg[0]
+                    msg = msg[1:]
+
+                    if new_char == '}':
+                        break
+                    else:
+                        buf += new_char
+
+                new_msg += _get_from_format_dict(extra_format_dict, buf)
+
             else:
-                new_msg += format_dict[escape_key]
+                new_msg += _get_from_format_dict(extra_format_dict, escape_key)
 
             if escape_key == 'c':
                 fill_last = len(msg) and msg[0] in digits
