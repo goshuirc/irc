@@ -83,6 +83,14 @@ class ServerConnection(asyncio.Protocol):
         self.user = user
         self.real = real
 
+    @property
+    def channels(self):
+        return self.info.channels
+
+    @property
+    def users(self):
+        return self.info.users
+
     # event handling
     def register_event(self, direction, verb, child_fn, priority=10):
         event_managers = []
