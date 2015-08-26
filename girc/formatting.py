@@ -92,15 +92,21 @@ def extract_girc_colours(msg, fill_last):
     if not len(msg):
         return '', ''
 
+    original_msg = msg
+
     colours, msg = msg.split(']', 1)
     colours = colours.lstrip('[')
 
     if ',' in colours:
         fore, back = colours.split(',')
+        if fore not in colour_name_to_code or back not in colour_name_to_code:
+            return '', original_msg
         fore = colour_name_to_code[fore]
         back = colour_name_to_code[back]
         return '{},{}'.format(fore, back.zfill(2) if fill_last else back), msg
     else:
+        if colours not in colour_name_to_code:
+            return '', original_msg
         fore = colour_name_to_code[colours]
         return '{}'.format(fore.zfill(2) if fill_last else fore), msg
 

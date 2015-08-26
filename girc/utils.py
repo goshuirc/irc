@@ -43,6 +43,11 @@ class NickMask:
     """An IRC nickmask."""
 
     def __init__(self, mask):
+        if isinstance(mask, NickMask):
+            return mask
+        elif hasattr(mask, 'nickmask'):
+            mask = mask.nickmask
+
         self.nick = ''
         self.user = ''
         self.host = ''
