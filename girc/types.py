@@ -47,9 +47,9 @@ class User(ServerConnected, TargetableUserChan):
         self.is_user = True
 
         user = NickMask(nickmask)
-        self.nick = user.nick
-        self.user = user.user
-        self.host = user.host
+        self.nick = self.s.istring(user.nick)
+        self.user = self.s.istring(user.user)
+        self.host = self.s.istring(user.host)
 
         self._target = self.nick
 
@@ -86,7 +86,7 @@ class Channel(ServerConnected, TargetableUserChan):
 
         self.is_channel = True
 
-        self.name = name
+        self.name = self.s.istring(name)
         self.joined = False  # whether we are joined to this channel
 
         self._target = self.name
@@ -129,4 +129,4 @@ class Server(ServerConnected):
 
         self.is_server = True
 
-        self.name = name
+        self.name = self.s.istring(name)
