@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+from collections import OrderedDict
+
 from .utils import CaseInsensitiveDict
 
 _limits = [
@@ -43,21 +45,22 @@ class Features:
         # ditto for ascii vs rfc3454
         self.available['casemapping'] = 'ascii'
 
-    def _simplify_feature_value(self, feature, value):
-        """Split up features and return a human-readable value."""
-        # special processing for certain features
-        if feature == 'prefix':
+    def _simplify_feature_value(self, name, value):
+        """Return simplified and more pythonic feature values."""
+        if name == 'prefix':
             channel_modes, channel_chars = value.split(')')
             channel_modes = channel_modes[1:]
 
-            value = dict(zip(channel_modes, channel_chars))
+            # [::-1] to reverse order and go from lowest to highest privs
+            value = OrderedDict(list(zip(channel_modes, channel_chars))[::-1])
+
             return value
 
-        elif feature == 'chanmodes':
+        elif name == 'chanmodes':
             value = value.split(',')
             return value
 
-        elif feature == 'targmax':
+        elif name == 'targmax':
             max_available = {}
             for sort in value.split(','):
                 command, limit = sort.split(':')
@@ -66,7 +69,7 @@ class Features:
 
             return max_available
 
-        elif feature == 'chanlimit':
+        elif name == 'chanlimit':
             limit_available = {}
             for sort in value.split(','):
                 chan_types, limit = sort.split(':')
@@ -75,7 +78,7 @@ class Features:
 
             return limit_available
 
-        elif feature in _limits:
+        elif name in _limits:
             value = limit_to_number(value)
             return value
 

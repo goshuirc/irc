@@ -113,6 +113,31 @@ class Channel(ServerConnected, TargetableUserChan):
 
         return userlist
 
+    def has_privs(self, user, lowest_mode='o'):
+        """Return True if user has the given mode or higher."""
+        if isinstance(user, User):
+            user = user.nick
+
+        user_prefixes = self.prefixes.get(user, None)
+
+        if not user_prefixes:
+            return False
+
+        mode_dict = self.s.features.available['prefix']
+
+        caught = False
+
+        for mode, prefix in mode_dict.items():
+            if mode in lowest_mode and not caught:
+                caught = True
+            elif mode not in lowest_mode and not caught:
+                continue
+
+            if prefix in user_prefixes:
+                return True
+
+        return False
+
     def add_user(self, nick, prefixes=None):
         """Add a user to our internal list of nicks."""
         if nick not in self._user_nicks:
