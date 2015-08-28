@@ -41,8 +41,8 @@ class ServerConnection(asyncio.Protocol):
 
         # client info
         self.nick = None
-        self.user = None
-        self.real = None
+        self.user = '*'
+        self.real = '*'
         self.autojoin_channels = []
 
         # generated and state info
@@ -167,7 +167,7 @@ class ServerConnection(asyncio.Protocol):
         self.transport = transport
         self.connected = True
 
-        self.send('CAP LS', params=['302'])
+        self.send('CAP', params=['LS', '302'])
 
     def quit(self, message=None):
         """Quit from the server."""
@@ -285,12 +285,12 @@ class ServerConnection(asyncio.Protocol):
         X_DELIM = '\x01'
         self.notice(target, X_DELIM + ' '.join(atoms) + X_DELIM, formatted=False)
 
-    def join_channel(self, channel, key=None):
+    def join_channel(self, channel, key=None, tags=None):
         """Join the given channel."""
         params = [channel]
         if key:
             params.append(key)
-        self.send('JOIN', params=params)
+        self.send('JOIN', params=params, tags=tags)
 
     def mode(self, target, mode_string=None, tags=None):
         """Sends new modes to or requests existing modes from the given target."""
@@ -301,11 +301,12 @@ class ServerConnection(asyncio.Protocol):
 
     # default events
     def rpl_cap(self, event):
+        params = list(event['params'])
         if event['direction'] == 'in':
-            clientname = event['params'].pop(0)
-        subcmd = event['params'].pop(0).casefold()
+            clientname = params.pop(0)
+        subcmd = params.pop(0).casefold()
 
-        self.capabilities.ingest(subcmd, event['params'])
+        self.capabilities.ingest(subcmd, params)
 
         # registration
         if subcmd in ['ack', 'nak'] and not self.registered:

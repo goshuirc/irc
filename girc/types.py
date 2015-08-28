@@ -57,6 +57,10 @@ class User(ServerConnected, TargetableUserChan):
 
     # properties
     @property
+    def name(self):
+        return self.nick
+
+    @property
     def channels(self):
         chanlist = []
 

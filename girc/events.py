@@ -15,11 +15,22 @@ INFO_ATTR = 1
 _verb_param_map = {
     'target': {
         0: (
-            'privmsg', 'pubmsg', 'notice', 'ctcp',
-            'cmode', 'umode',
+            'privmsg', 'pubmsg', 'privnotice', 'pubnotice', 'ctcp',
+            'umode', 'cmode', 'nosuchservice',
+            'targettoofast',
         ),
         1: (
             'cmodeis',
+        ),
+    },
+    'new_nick': {
+        0: (
+            'nick',
+        ),
+    },
+    'user': {
+        0: (
+            'kick'
         ),
     },
     'escaped_message': {
@@ -28,15 +39,44 @@ _verb_param_map = {
             'motdstart', 'motd', 'endofmotd',
             'youreoper',
             'adminloc1', 'adminloc2', 'adminemail',
+            'quit',
         ),
         1: (
-            'privmsg', 'pubmsg', 'notice',
-            'nosuchnick', 'nosuchserver', 'nosuchchannel',
+            'privmsg', 'pubmsg', 'privnotice', 'pubnotice',
+            'nosuchnick', 'nosuchserver', 'nosuchchannel', 'nosuchservice',
+            'targettoofast', 'kick',
         ),
     },
     'channel': {
+        0: (
+            'cannotsendtochan', 'chancreatetime',
+            'topic', 'cmode',
+        ),
+        1: (
+            'endofnames', 'cmodeis',
+        ),
         2: (
             'namreply',
+        ),
+    },
+    'topic': {
+        1: (
+            'topic',
+        ),
+    },
+    'names': {
+        3: (
+            'namreply',
+        ),
+    },
+    'timestamp': {
+        2: (
+            'chancreatetime',
+        ),
+    },
+    'escaped_reason': {
+        1: (
+            'cannotsendtochan',
         ),
     },
     'channels': {
@@ -74,7 +114,7 @@ def ctcp_unpack_message(info):
             new_info['params'] = new_info['params'][:1]
             new_info['params'].append(msg)
         else:
-            if verb == 'notice':
+            if verb in ['privnotice', 'pubnotice']:
                 new_info['verb'] = 'ctcp_reply'
             else:
                 new_info['verb'] = 'ctcp'
@@ -149,6 +189,10 @@ def message_to_event(direction, message):
     if verb == 'privmsg':
         if server.is_channel(message.params[0]):
             verb = 'pubmsg'
+    if verb == 'notice':
+        verb = 'privnotice'
+        if server.is_channel(message.params[0]):
+            verb = 'pubnotice'
     elif verb == 'mode':
         verb = 'umode'
         if server.is_channel(message.params[0]):
@@ -159,10 +203,10 @@ def message_to_event(direction, message):
     info['direction'] = direction
     info['verb'] = verb
 
-    infos = [[verb, info],]
+    infos = [[verb, info], ]
 
     # handle shitty ctcp
-    if verb in ('privmsg', 'pubmsg', 'notice'):
+    if verb in ('privmsg', 'pubmsg', 'privnotice', 'pubnotice'):
         infos = ctcp_unpack_message(info)
 
     # work on each info object separately
@@ -194,30 +238,31 @@ def message_to_event(direction, message):
                 infos.append(['action', info])
 
         if name == 'umode' and len(infos[i][INFO_ATTR]['params']) > 1:
-            infos[i][INFO_ATTR]['modes'] = parse_modes(infos[i][INFO_ATTR]['params'][1:])
+            modestring = infos[i][INFO_ATTR]['params'][1:]
+            modes = parse_modes(modestring)
+
+            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
+            infos[i][INFO_ATTR]['modes'] = modes
 
         if name == 'cmode' and len(infos[i][INFO_ATTR]['params']) > 1:
-            infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][0]
-
+            modestring = infos[i][INFO_ATTR]['params'][1:]
             chanmodes = server.features.get('chanmodes')
-            modes = parse_modes(infos[i][INFO_ATTR]['params'][1:], chanmodes)
+            modes = parse_modes(modestring, chanmodes)
 
+            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
             infos[i][INFO_ATTR]['modes'] = modes
 
         if name == 'cmodeis':
-            if len(infos[i][INFO_ATTR]['params']) > 1:
-                infos[i][INFO_ATTR]['channel'] = infos[i][INFO_ATTR]['params'][1]
-
             if len(infos[i][INFO_ATTR]['params']) > 2:
+                modestring = infos[i][INFO_ATTR]['params'][2:]
                 chanmodes = server.features.get('chanmodes')
-                modes = parse_modes(infos[i][INFO_ATTR]['params'][2:], chanmodes)
+                modes = parse_modes(modestring, chanmodes)
 
+                infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
                 infos[i][INFO_ATTR]['modes'] = modes
             else:
+                infos[i][INFO_ATTR]['modestring'] = ''
                 infos[i][INFO_ATTR]['modes'] = []
-
-            name = 'cmode'
-            infos[i][INFO_ATTR]['verb'] = 'cmode'
 
         if name == 'namreply' and len(infos[i][INFO_ATTR]['params']) > 3:
             channel_name = infos[i][INFO_ATTR]['params'][2]
@@ -287,12 +332,14 @@ def message_to_event(direction, message):
                 infos[i][INFO_ATTR]['from_to'] = target
         elif verb == 'pubmsg':
             infos[i][INFO_ATTR]['from_to'] = target
-        elif verb == 'notice':
+        elif verb == 'privnotice':
             if dir == 'in':
-                if target and target.is_channel:
-                    infos[i][INFO_ATTR]['from_to'] = target
-                else:
-                    infos[i][INFO_ATTR]['from_to'] = source
+                infos[i][INFO_ATTR]['from_to'] = source
+            elif dir == 'out':
+                infos[i][INFO_ATTR]['from_to'] = target
+        elif verb == 'pubnotice':
+            if dir == 'in':
+                infos[i][INFO_ATTR]['from_to'] = target
             elif dir == 'out':
                 infos[i][INFO_ATTR]['from_to'] = target
 
@@ -396,7 +443,7 @@ numerics = {
     '326': 'nochanpass',
     '327': 'chpassunknown',
     '328': 'channel_url',
-    '329': 'creationtime',
+    '329': 'chancreatetime',
     '331': 'notopic',
     '332': 'topic',
     '333': 'topicwhotime',
