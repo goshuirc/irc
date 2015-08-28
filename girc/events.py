@@ -16,7 +16,7 @@ _verb_param_map = {
     'target': {
         0: (
             'privmsg', 'pubmsg', 'privnotice', 'pubnotice', 'ctcp',
-            'umode', 'cmode', 'nosuchservice',
+            'umode', 'cmode', 'nosuchservice', 'ctcp_reply',
             'targettoofast',
         ),
         1: (
@@ -241,7 +241,7 @@ def message_to_event(direction, message):
             modestring = infos[i][INFO_ATTR]['params'][1:]
             modes = parse_modes(modestring)
 
-            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
+            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring).strip()
             infos[i][INFO_ATTR]['modes'] = modes
 
         if name == 'cmode' and len(infos[i][INFO_ATTR]['params']) > 1:
@@ -249,7 +249,7 @@ def message_to_event(direction, message):
             chanmodes = server.features.get('chanmodes')
             modes = parse_modes(modestring, chanmodes)
 
-            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
+            infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring).strip()
             infos[i][INFO_ATTR]['modes'] = modes
 
         if name == 'cmodeis':
@@ -258,7 +258,7 @@ def message_to_event(direction, message):
                 chanmodes = server.features.get('chanmodes')
                 modes = parse_modes(modestring, chanmodes)
 
-                infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring)
+                infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring).strip()
                 infos[i][INFO_ATTR]['modes'] = modes
             else:
                 infos[i][INFO_ATTR]['modestring'] = ''
@@ -298,10 +298,13 @@ def message_to_event(direction, message):
                 if server.is_channel(source):
                     server.info.create_channel(source)
                     infos[i][INFO_ATTR][attr] = server.info.channels.get(source)
-                elif server.is_server(source):
+                elif '.' in source and server.is_server(source):
                     server.info.create_server(source)
                     infos[i][INFO_ATTR][attr] = server.info.servers.get(source)
                 elif server.is_nick(source):
+                    server.info.create_user(source)
+                    infos[i][INFO_ATTR][attr] = server.info.users.get(NickMask(source).nick)
+                else:  # we assume this is a user with messed up characters
                     server.info.create_user(source)
                     infos[i][INFO_ATTR][attr] = server.info.users.get(NickMask(source).nick)
 

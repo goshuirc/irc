@@ -9,9 +9,11 @@ def parse_modes(params, mode_types=None):
     """Return a modelist.
 
     Args:
-        params (str): Parameters from MODE event.
+        params (list of str): Parameters from MODE event.
         mode_types (list): CHANMODES-like mode types.
     """
+    params = list(params)
+
     if params[0][0] not in '+-':
         raise Exception('first param must start with + or -')
 
@@ -29,8 +31,8 @@ def parse_modes(params, mode_types=None):
             continue
 
         if (char in mode_types[0] or char in mode_types[1] or
-            (char in mode_types[2] and direction == '+') and len(args)):
-                value = args.pop(0)
+                (char in mode_types[2] and direction == '+') and len(args)):
+            value = args.pop(0)
         else:
             value = None
 

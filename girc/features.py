@@ -32,7 +32,7 @@ class Features:
         self.s = server_connection
 
         # RFC1459 basics, plus LINELEN
-        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'LINELEN=512')
+        self.ingest('PREFIX=(ov)@+', 'CHANTYPES=#', 'LINELEN=512', 'NICKLEN=9')
 
         self.ingest('CHANMODES=,,,')  # this just creates empty list for us
 

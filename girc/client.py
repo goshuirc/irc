@@ -3,6 +3,7 @@
 # Released under the ISC license
 import asyncio
 import base64
+import re
 
 from ircreactor.events import EventManager
 from ircreactor.envelope import RFC1459Message
@@ -363,8 +364,12 @@ class ServerConnection(asyncio.Protocol):
         return False
 
     def is_nick(self, name):
-        # XXX - lazy for now, to check ISUPPORT etc
-        return not self.is_channel(name) and not self.is_server(name)
+        nicklen = self.features.available['nicklen']
+        nickmatch = r'^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]{0,'
+        nickmatch += str(nicklen - 1)
+        nickmatch += r'}$'
+
+        return name in self.info.users or re.match(nickmatch, name)
 
     # commands
     def join_channels(self, *channels):
