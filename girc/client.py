@@ -364,11 +364,9 @@ class ServerConnection(asyncio.Protocol):
         return False
 
     def is_nick(self, name):
-        nicklen = self.features.available['nicklen']
-        nickmatch = r'^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]{0,'
-        nickmatch += str(nicklen - 1)
-        nickmatch += r'}$'
-
+        # we cannot assume how long nicknames can be for other users
+        #   based on NICKLEN, spec forbids it
+        nickmatch = r'^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]+$'
         return name in self.info.users or re.match(nickmatch, name)
 
     # commands
