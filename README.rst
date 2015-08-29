@@ -1,5 +1,7 @@
-gIRC
-====
+.. image:: docs/logo.png
+    :alt: gIRC
+    :align: center
+
 A modern Python IRC library for Python 3.4, based on asyncio. In Development.
 
 This is not even in alpha right now. If you use this, anything can change without any notice whatsoever, everything can be overhauled, and development may even stop entirely without any warning.
