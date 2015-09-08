@@ -49,11 +49,11 @@ _verb_param_map = {
     },
     'channel': {
         0: (
-            'cannotsendtochan', 'chancreatetime',
+            'cannotsendtochan',
             'topic', 'cmode',
         ),
         1: (
-            'endofnames', 'cmodeis',
+            'endofnames', 'cmodeis', 'chancreatetime',
         ),
         2: (
             'namreply',
