@@ -300,6 +300,13 @@ class ServerConnection(asyncio.Protocol):
             params.append(key)
         self.send('JOIN', params=params, tags=tags)
 
+    def part_channel(self, channel, reason=None, tags=None):
+        """Part the given channel."""
+        params = [channel]
+        if reason:
+            params.append(reason)
+        self.send('PART', params=params, tags=tags)
+
     def mode(self, target, mode_string=None, tags=None):
         """Sends new modes to or requests existing modes from the given target."""
         params = [target]
