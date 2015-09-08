@@ -254,6 +254,13 @@ class ServerConnection(asyncio.Protocol):
                 self._events_in.dispatch('all', event)
 
     # commands
+    def action(self, target, message, formatted=True, tags=None):
+        """Send an action to the given target."""
+        if formatted:
+            message = unescape(message)
+
+        self.ctcp(target, 'ACTION', message)
+
     def msg(self, target, message, formatted=True, tags=None):
         """Send a privmsg to the given target."""
         if formatted:
