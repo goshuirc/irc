@@ -8,6 +8,8 @@ This is not even in alpha right now. If you use this, anything can change withou
 
 If you would like to help build this, awesome! Otherwise, I'd stay away for now and use another library: `irc <https://bitbucket.org/jaraco/irc>`_, `irc3 <https://github.com/gawel/irc3/>`_.
 
+`Hosted Documentation <http://girc.readthedocs.org/en/latest/>`_
+
 
 Features
 --------
