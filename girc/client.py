@@ -89,6 +89,14 @@ class ServerConnection(asyncio.Protocol):
 
     # event handling
     def register_event(self, direction, verb, child_fn, priority=10):
+        """Register an event with all servers.
+
+        Args:
+            direction (str): `in`, `out`, `both`, `raw`.
+            verb (str): Event name.
+            child_fn (function): Handler function.
+            priority (int): Handler priority (lower priority executes first).
+        """
         event_managers = []
         if direction in ('in', 'both'):
             event_managers.append(self._events_in)

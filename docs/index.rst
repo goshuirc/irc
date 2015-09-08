@@ -38,6 +38,7 @@ Library
    library/reactor
    library/serverconnection
    library/formatting
+   library/events
 
 
 DevNotes

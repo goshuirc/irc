@@ -17,6 +17,8 @@ Registering events
 
 You can register events with the reactor to have them automagically registered with every server you connect to.
 
+.. automethod:: girc.Reactor.handler
+
 .. automethod:: girc.Reactor.register_event
 
 

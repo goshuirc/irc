@@ -64,6 +64,27 @@ class Reactor:
 
     # events
     def handler(self, direction, verb, priority=10):
+        """Register this function as an event handler.
+
+        Args:
+            direction (str): ``in``, ``out``, ``both``, ``raw``.
+            verb (str): Event name.
+            priority (int): Handler priority (lower priority executes first).
+
+        Example:
+            These handlers print out a pretty raw log::
+
+                reactor = girc.Reactor()
+
+                @reactor.handler('in', 'raw', priority=1)
+                def handle_raw_in(event):
+                    print(event['server'].name, ' ->', escape(event['data']))
+
+
+                @reactor.handler('out', 'raw', priority=1)
+                def handle_raw_out(event):
+                    print(event['server'].name, '<- ', escape(event['data']))
+        """
         def parent_fn(func):
             @functools.wraps(func)
             def child_fn(msg):
