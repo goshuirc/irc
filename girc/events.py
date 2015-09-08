@@ -28,6 +28,11 @@ _verb_param_map = {
             'nick',
         ),
     },
+    'nick': {
+        0: (
+            'welcome',
+        ),
+    },
     'user': {
         0: (
             'kick'
@@ -44,7 +49,7 @@ _verb_param_map = {
         1: (
             'privmsg', 'pubmsg', 'privnotice', 'pubnotice',
             'nosuchnick', 'nosuchserver', 'nosuchchannel', 'nosuchservice',
-            'targettoofast', 'kick',
+            'targettoofast', 'kick', 'welcome',
         ),
     },
     'channel': {
@@ -230,6 +235,11 @@ def message_to_event(direction, message):
                         value = escape(value)
                     infos[i][INFO_ATTR][attr] = value
 
+        # custom processing
+        if name == 'welcome':
+            # for servers where a low nicklen makes them silently truncate our nick
+            server.nick = server.istring(infos[i][INFO_ATTR]['nick'])
+
         # custom message attributes
         if name == 'ctcp':
             if infos[i][INFO_ATTR]['ctcp_verb'] == 'action':
@@ -264,14 +274,17 @@ def message_to_event(direction, message):
                 infos[i][INFO_ATTR]['modestring'] = ''
                 infos[i][INFO_ATTR]['modes'] = []
 
-        if name == 'namreply' and len(infos[i][INFO_ATTR]['params']) > 3:
+        if name == 'namreply':
             channel_name = infos[i][INFO_ATTR]['params'][2]
             server.info.create_channel(channel_name)
             channel = server.info.channels.get(channel_name)
 
             nice_names = []
             channel_prefixes = {}
-            raw_names = infos[i][INFO_ATTR]['params'][3].split(' ')
+            if len(infos[i][INFO_ATTR]['params']) > 3:
+                raw_names = infos[i][INFO_ATTR]['params'][3].split(' ')
+            else:
+                raw_names = []
 
             for name in raw_names:
                 prefixes = ''
