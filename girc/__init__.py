@@ -23,7 +23,11 @@ class Reactor:
         loop.run_forever()
 
     def shutdown(self, message=None):
-        """Shutdown with a message!"""
+        """Disconnect all servers with a message.
+
+        Args:
+            message (str): Quit message to use on each connection.
+        """
         for name, server in self.servers.items():
             server.quit(message)
 
@@ -35,12 +39,15 @@ class Reactor:
     def create_server(self, server_name, *args, **kwargs):
         """Create an IRC server connection slot.
 
-        The server will actually be connected to when :meth:`girc.Reactor.connect_to` is called
-        later.
+        The server will actually be connected to when
+        :meth:`girc.client.ServerConnection.connect` is called later.
 
         Args:
             server_name (str): Name of the server, to be used for functions and accessing the
                 server later through the reactor.
+
+        Returns:
+            server (girc.client.ServerConnection): A not-yet-connected server.
         """
         server = ServerConnection(name=server_name, reactor=self)
 
@@ -66,6 +73,14 @@ class Reactor:
         return parent_fn
 
     def register_event(self, direction, verb, child_fn, priority=10):
+        """Register an event with all servers.
+
+        Args:
+            direction (str): `in`, `out`, `both`, `raw`.
+            verb (str): Event name.
+            child_fn (function): Handler function.
+            priority (int): Handler priority (lower priority executes first).
+        """
         if verb not in self._event_handlers:
             self._event_handlers[verb] = []
 
