@@ -5,6 +5,30 @@
 
 This class handles a connection to a single IRC server. It's created by your :class:`girc.Reactor` using :meth:`girc.Reactor.create_server`, and usually accessed from events.
 
+Connection
+----------
+
+These functions let you set connection information and actually connect to a network!
+
+.. automethod:: girc.client.ServerConnection.set_user_info
+
+.. automethod:: girc.client.ServerConnection.set_connect_password
+
+.. automethod:: girc.client.ServerConnection.sasl_plain
+
+.. automethod:: girc.client.ServerConnection.join_channels
+
+    This example joins the channels ``#example`` and ``#cool``:
+
+    .. code-block:: python
+
+        server.join_channels('#example', '#cool')
+
+.. automethod:: girc.client.ServerConnection.connect
+
+    This method should be called once the necessary user info is set using
+    :meth:`girc.client.ServerConnection.set_user_info`
+
 IRC casemapping
 ---------------
 

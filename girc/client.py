@@ -14,7 +14,7 @@ from .formatting import unescape
 from .info import Info
 from .imapping import IDict, IList, IString
 from .events import message_to_event
-from .utils import validate_hostname
+from .utils import validate_hostname, CaseInsensitiveDict
 
 loop = asyncio.get_event_loop()
 
@@ -42,9 +42,8 @@ class ServerConnection(asyncio.Protocol):
 
         # client info
         self.nick = None
-        self.user = '*'
-        self.real = '*'
-        self.autojoin_channels = []
+        self.user = None
+        self.real = None
 
         # generated and state info
         self.features = Features(self)  # must be done before info
@@ -65,8 +64,10 @@ class ServerConnection(asyncio.Protocol):
         ])
 
         self.info = Info(self)
+        self.connect_info = CaseInsensitiveDict(channels=[])
 
         # events
+        self.register_event('in', 'welcome', self.rpl_welcome, priority=-9999)
         self.register_event('both', 'cap', self.rpl_cap)
         self.register_event('both', 'features', self.rpl_features)
         self.register_event('both', 'endofmotd', self.rpl_endofmotd)
@@ -77,12 +78,6 @@ class ServerConnection(asyncio.Protocol):
         self.register_event('in', 'authenticate', self.rpl_authenticate)
 
         self.reactor = reactor
-        self.reactor._append_server(self)
-
-    def set_user_info(self, nick, user='*', real='*'):
-        self.nick = nick
-        self.user = user
-        self.real = real
 
     @property
     def channels(self):
@@ -104,6 +99,37 @@ class ServerConnection(asyncio.Protocol):
 
         for event_manager in event_managers:
             event_manager.register(verb, child_fn, priority=priority)
+
+    # connect info
+    def set_connect_password(self, password):
+        """Sets connect password for this server, to be used before connection.
+
+        Args:
+            password (str): Password to connect with.
+        """
+        if self.connected:
+            raise Exception("Can't set password now, we're already connected!")
+
+        # server will pickup list when they exist
+        self.connect_info['connect_password'] = password
+
+    def set_user_info(self, nick, user='*', real='*'):
+        """Sets user info for this server, to be used before connection.
+
+        Args:
+            nick (str): Nickname to use.
+            user (str): Username to use.
+            real (str): Realname to use.
+        """
+        if self.connected:
+            raise Exception("Can't set user info now, we're already connected!")
+
+        # server will pickup list when they exist
+        self.connect_info['user'] = {
+            'nick': nick,
+            'user': user,
+            'real': real,
+        }
 
     # casemapping and casemapped objects
     def set_casemapping(self, casemap):
@@ -153,8 +179,33 @@ class ServerConnection(asyncio.Protocol):
         return new_dict
 
     # protocol connect / disconnect
+    def connect(self, *args, auto_reconnect=False, **kwargs):
+        """Connects to the given server.
+
+        Args:
+            auto_reconnect (bool): Automatically reconnect on disconnection.
+
+        Other arguments to this function are as usually supplied to
+        :meth:`asyncio.BaseEventLoop.create_connection`.
+        """
+        connection_info = {
+            'auto_reconnect': auto_reconnect,
+            'args': args,
+            'kwargs': kwargs,
+        }
+        self.connect_info['connection'] = connection_info
+
+        # confirm we have user info set
+        if 'user' not in self.connect_info:
+            raise Exception('`set_user_info` must be called before connecting to server.')
+
+        # create connection and run
+        connection = loop.create_connection(lambda: self,
+                                            *args, **kwargs)
+        asyncio.Task(connection)
+
     def connection_made(self, transport):
-        if not self.nick:
+        if 'user' not in self.connect_info:
             raise Exception('Nick not found. User info must be set with set_user_info()'
                             'before connecting')
             self.exit()
@@ -315,6 +366,9 @@ class ServerConnection(asyncio.Protocol):
         self.send('MODE', params=params, source=self.nick, tags=tags)
 
     # default events
+    def rpl_welcome(self, event):
+        self.nick = event['nick']
+
     def rpl_cap(self, event):
         params = list(event['params'])
         if event['direction'] == 'in':
@@ -338,8 +392,12 @@ class ServerConnection(asyncio.Protocol):
                 self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
 
     def send_welcome(self):
-        self.send('NICK', params=[self.nick])
-        self.send('USER', params=[self.user, '*', '*', self.real])
+        info = self.connect_info['user']
+        password = self.connect_info.get('connect_password')
+        if password:
+            self.send('PASS', params=[password])
+        self.send('NICK', params=[info['nick']])
+        self.send('USER', params=[info['user'], '*', '*', info['real']])
         self.registered = True
 
     def rpl_authenticate(self, event):
@@ -362,8 +420,7 @@ class ServerConnection(asyncio.Protocol):
         if not self.ready:
             self.ready = True
 
-            if self.autojoin_channels:
-                self.join_channels(*self.autojoin_channels)
+            self.join_channels(*self.connect_info.get('channels', []))
 
     def rpl_ping(self, event):
         self.send('PONG', params=event['params'])
@@ -387,7 +444,8 @@ class ServerConnection(asyncio.Protocol):
     def join_channels(self, *channels):
         # we schedule joining for later
         if not self.ready:
-            self.autojoin_channels = channels
+            for channel in channels:
+                self.connect_info['channels'].append(channel)
             return True
 
         for channel in channels:
@@ -434,3 +492,20 @@ class ServerConnection(asyncio.Protocol):
             return True
 
         return self.start_sasl(method)
+
+    def sasl_plain(self, name, password, identity=None):
+        """Authenticate to a server using SASL plain, or does so on connection.
+
+        Args:
+            name (str): Name to auth with.
+            password (str): Password to auth with.
+            identity (str): Identity to auth with (defaults to name).
+        """
+        if identity is None:
+            identity = name
+
+        if not self.connected:
+            self.connect_info['sasl'] = ['plain', name, password, identity]
+            return
+
+        self.sasl('plain', name, password, identity)

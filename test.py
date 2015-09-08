@@ -12,9 +12,12 @@ Usage:
     test.py (-h | --help)
 
 Options:
-    --nick=<nick>        Nick to connect with [default: girc].
-    --sasl-name=<name>   SASL name to authenticate with (PLAIN).
-    --sasl-pass=<pass>   SASL password to authenticate with (PLAIN).
+    --nick=<nick>          Nick to connect with [default: girc].
+    --user=<user>          Username to connect with [default: girc].
+    --real=<real>          Realname to connect with [default: *].
+    --connect-pass=<pass>  Connect password.
+    --sasl-name=<name>     SASL name to authenticate with (PLAIN).
+    --sasl-pass=<pass>     SASL password to authenticate with (PLAIN).
 
     --host=<host>   Host for the bot to connect to [default: localhost].
     --port=<port>   Port for the bot to connect to [default: 6667].
@@ -64,6 +67,9 @@ if __name__ == '__main__':
 
     if arguments['connect']:
         nick = arguments['--nick']
+        user = arguments['--user']
+        real = arguments['--real']
+        connect_pass = arguments['--connect-pass']
         channels = arguments['<channel>']
         host = arguments['--host']
         port = int(arguments['--port'])
@@ -100,12 +106,14 @@ if __name__ == '__main__':
         else:
             family = 0
 
-        reactor.create_server('local', host, port, ssl=use_ssl, family=family)
-        reactor.set_user_info('local', nick, user=nick)
+        server = reactor.create_server('local')
+        server.set_user_info(nick, user=user, real=real)
+        if connect_pass:
+            server.set_connect_password(connect_pass)
         if sasl_name and sasl_pass:
-            reactor.sasl_plain('local', sasl_name, sasl_pass)
-        reactor.join_channels('local', *channels)
-        reactor.connect_to('local')
+            server.sasl_plain(sasl_name, sasl_pass)
+        server.join_channels(*channels)
+        server.connect(host, port, ssl=use_ssl, family=family)
 
         try:
             reactor.run_forever()
