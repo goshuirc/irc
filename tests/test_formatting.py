@@ -56,3 +56,26 @@ class FormattingTestCase(unittest.TestCase):
 
         self.assertEqual(formatting.unescape('$bLol $c[red,blue]cool $c[green,yellow]tests$r!'),
                          '\x02Lol \x034,2cool \x033,8tests\x0f!')
+
+        # testing custom unescaping function
+        def custom_unescape(*args, **kwargs):
+            return '{}-{}'.format(','.join(args),
+                                  ','.join('{}:{}'.format(k, v) for k, v in kwargs.items()))
+
+        extra_dict = {
+            'custom': [custom_unescape, ['r', 't'], {'34': 'dfg'}],
+        }
+        self.assertEqual(formatting.unescape('lolo[${custom}]', extra_format_dict=extra_dict),
+                         'lolo[r,t-34:dfg]')
+
+        extra_dict = {
+            'custom': [custom_unescape, ['wer', 'hgd']],
+        }
+        self.assertEqual(formatting.unescape('fff--${custom}]', extra_format_dict=extra_dict),
+                         'fff--wer,hgd-]')
+
+        extra_dict = {
+            'custom': [custom_unescape],
+        }
+        self.assertEqual(formatting.unescape('abcd=${custom}=', extra_format_dict=extra_dict),
+                         'abcd=-=')
