@@ -12,6 +12,8 @@ def parse_modes(params, mode_types=None):
         params (list of str): Parameters from MODE event.
         mode_types (list): CHANMODES-like mode types.
     """
+    # we don't accept bare strings because we don't want to try to do
+    #   intelligent parameter splitting
     params = list(params)
 
     if params[0][0] not in '+-':
@@ -46,7 +48,10 @@ class NickMask:
 
     def __init__(self, mask):
         if isinstance(mask, NickMask):
-            return mask
+            self.nick = mask.nick
+            self.user = mask.user
+            self.host = mask.host
+            return
         elif hasattr(mask, 'nickmask'):
             mask = mask.nickmask
 

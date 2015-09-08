@@ -41,6 +41,13 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(nm.user, '')
         self.assertEqual(nm.host, '')
 
+        nm1 = nm = utils.NickMask('dan!~lol@localhost')
+        nm2 = utils.NickMask(nm)
+
+        self.assertEqual(nm1.nick, nm2.nick)
+        self.assertEqual(nm1.user, nm2.user)
+        self.assertEqual(nm1.host, nm2.host)
+
     def test_caseinsensitivelist(self):
         ls = utils.CaseInsensitiveList(['LoL', 'yOLo', 'Tres'])
 
@@ -76,3 +83,25 @@ class UtilsTestCase(unittest.TestCase):
         self.assertFalse(hn(''))
         self.assertFalse(hn('hdfh.fgeth..ehf.egds'))
         self.assertFalse(hn('-lol-.43wrthwrt.qeht.ethwe.local'))
+
+    def test_parse_modes(self):
+        pm = utils.parse_modes
+
+        modes = ['beI', 'k', 'l', 'BCMNORScimnpstz']
+
+        self.assertEqual(pm(['+btk', 'lol', 'ok'], modes), [
+            ['+', 'b', 'lol'],
+            ['+', 't', None],
+            ['+', 'k', 'ok'],
+        ])
+
+        self.assertEqual(pm(['+IBlCkSip', 'cool!re@example.com', 'oeoeoeoe!!', 'r'], modes), [
+            ['+', 'I', 'cool!re@example.com'],
+            ['+', 'B', None],
+            ['+', 'l', 'oeoeoeoe!!'],
+            ['+', 'C', None],
+            ['+', 'k', 'r'],
+            ['+', 'S', None],
+            ['+', 'i', None],
+            ['+', 'p', None],
+        ])
