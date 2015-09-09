@@ -10,13 +10,15 @@ Registering events
 
 There are several different ways to register for events in girc. You can register through the :class:`girc.Reactor`, which automatically registers it on every existing and new server, or through the :class:`girc.client.ServerConnection` for just that specific server.
 
-Event registration for a :class:`girc.Reactor`:
+:class:`girc.Reactor` event registration
+****************************************
 
 .. automethod:: girc.Reactor.handler
 
 .. automethod:: girc.Reactor.register_event
 
-Event registration for a :class:`girc.client.ServerConnection`:
+:class:`girc.client.ServerConnection` event registration
+********************************************************
 
 .. automethod:: girc.client.ServerConnection.register_event
 
