@@ -35,7 +35,7 @@ _verb_param_map = {
     },
     'user': {
         0: (
-            'kick'
+            'kick',
         ),
     },
     'escaped_message': {
