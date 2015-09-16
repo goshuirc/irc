@@ -60,6 +60,8 @@ class Reactor:
                 server.register_event(info['direction'], verb, info['handler'],
                                       priority=info['priority'])
 
+        self.servers[server_name] = server
+
         return server
 
     # events
