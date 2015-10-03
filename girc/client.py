@@ -75,7 +75,9 @@ class ServerConnection(asyncio.Protocol):
         self.register_event('both', 'ping', self.rpl_ping)
 
         # sasl stuff
+        self._sasl_info = {}
         self.register_event('in', 'authenticate', self.rpl_authenticate)
+        self.register_event('in', 'saslsuccess', self.rpl_saslsuccess)
 
         self.reactor = reactor
 
@@ -410,15 +412,22 @@ class ServerConnection(asyncio.Protocol):
 
     def rpl_authenticate(self, event):
         if self._sasl_info['method'].casefold() == 'plain':
-            username = self._sasl_info['username']
+            username = self._sasl_info['name']
             password = self._sasl_info['password']
             identity = self._sasl_info['identity']
 
-            reply = base64.b64encode(bytes(identity) + b'\x00' +
-                                     bytes(username) + b'\x00' +
-                                     bytes(password))
+            reply = base64.b64encode(bytes(identity, 'utf8') + b'\x00' +
+                                     bytes(username, 'utf8') + b'\x00' +
+                                     bytes(password, 'utf8'))
+            reply = str(reply, 'utf8')
 
-        self.send('AUTHENTICATE', reply)
+        self.send('AUTHENTICATE', [reply])
+
+    def rpl_saslsuccess(self, event):
+        if not self.registered:
+            # finish registration
+            self.send('CAP', params=['END'])
+            self.send_welcome()
 
     def rpl_features(self, event):
         # last param is 'are supported by this server' text, so we ignore it
@@ -484,6 +493,7 @@ class ServerConnection(asyncio.Protocol):
         self._sasl_info = {
             'method': method,
         }
+        args = list(args)
         if method.casefold() == 'plain':
             name = args.pop(0)
             password = args.pop(0)
@@ -511,9 +521,5 @@ class ServerConnection(asyncio.Protocol):
         """
         if identity is None:
             identity = name
-
-        if not self.connected:
-            self.connect_info['sasl'] = ['plain', name, password, identity]
-            return
 
         self.sasl('plain', name, password, identity)
