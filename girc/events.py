@@ -287,6 +287,10 @@ def message_to_event(direction, message):
                 raw_names = []
 
             for name in raw_names:
+                # InspIRCd sends us an empty last param because they are cool
+                if not len(name):
+                    continue
+
                 prefixes = ''
                 while name[0] in server.features.available['prefix'].values():
                     prefixes += name[0]
