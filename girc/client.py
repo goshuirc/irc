@@ -437,7 +437,24 @@ class ServerConnection(asyncio.Protocol):
         if not self.ready:
             self.ready = True
 
-            self.join_channels(*self.connect_info.get('channels', []))
+            # identify if we have to
+            nickserv_info = self.connect_info.get('nickserv', {})
+            if nickserv_info:
+                self.nickserv_identify(nickserv_info['password'],
+                                       use_nick=nickserv_info['use_nick'])
+
+            # join channels
+            seconds = self.connect_info.get('channel_wait_seconds', 0)
+            channels = self.connect_info.get('channels', [])
+
+            if seconds:
+                @asyncio.coroutine
+                def channel_joiner(seconds_to_wait, channels):
+                    yield from asyncio.sleep(seconds_to_wait)
+                    self.join_channels(*channels)
+                asyncio.ensure_future(channel_joiner(seconds, channels))
+            else:
+                self.join_channels(*channels)
 
     def rpl_ping(self, event):
         self.send('PONG', params=event['params'])
@@ -458,11 +475,13 @@ class ServerConnection(asyncio.Protocol):
         return name in self.info.users or re.match(nickmatch, name)
 
     # commands
-    def join_channels(self, *channels):
+    def join_channels(self, *channels, wait_seconds=0):
         # we schedule joining for later
         if not self.ready:
             for channel in channels:
                 self.connect_info['channels'].append(channel)
+            if wait_seconds:
+                self.connect_info['channel_wait_seconds'] = wait_seconds
             return True
 
         for channel in channels:
@@ -478,6 +497,19 @@ class ServerConnection(asyncio.Protocol):
                 params.append(key)
 
             self.join_channel(channel, key=key)
+
+    def nickserv_identify(self, password, use_nick=None):
+        """Identify to NickServ (legacy)."""
+        if self.ready:
+            if use_nick:
+                self.msg(use_nick, 'IDENTIFY {}'.format(password))
+            else:
+                self.send('NICKSERV', params=['IDENTIFY', password])
+        else:
+            self.connect_info['nickserv'] = {
+                'password': password,
+                'use_nick': use_nick,
+            }
 
     def start_sasl(self):
         # only start if we have enabled SASL
