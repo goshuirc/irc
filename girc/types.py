@@ -55,7 +55,8 @@ class User(ServerConnected, TargetableUserChan):
 
         self.channel_names = self.s.ilist()
 
-        self.is_us = self.nick == server_connection.nick
+        # XXX - ASSUME WE WON'T GET ANY NOTICES/ETC FROM ANYONE ELSE BEFORE RPL_WELCOME
+        self.is_us = server_connection.nick is None or (self.nick == server_connection.nick)
 
     # properties
     @property
