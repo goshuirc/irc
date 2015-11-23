@@ -84,6 +84,9 @@ if __name__ == '__main__':
         using = []
         if use_ssl:
             using.append('SSL')
+            # default to a sane SSL port
+            if port == 6667:
+                port = 6697
         if use_ipv6:
             using.append('IPv6')
         elif use_ipv4:
