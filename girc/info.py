@@ -74,7 +74,8 @@ class Info:
             if user.nick == self.s.nick:
                 chan.joined = True
 
-            chan.get_modes()
+            if user.is_us:
+                chan.get_modes()
 
     def in_part_handler(self, event):
         user = event['source']

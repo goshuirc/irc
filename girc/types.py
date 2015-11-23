@@ -55,6 +55,8 @@ class User(ServerConnected, TargetableUserChan):
 
         self.channel_names = self.s.ilist()
 
+        self.is_us = self.nick == server_connection.nick
+
     # properties
     @property
     def name(self):
