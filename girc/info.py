@@ -71,6 +71,9 @@ class Info:
             if user.nick not in chan.users:
                 chan.users[user.nick] = {}
 
+            if user.nick not in chan.prefixes:
+                chan.prefixes[user.nick] = None
+
             if user.nick == self.s.nick:
                 chan.joined = True
 
