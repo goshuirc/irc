@@ -205,3 +205,59 @@ def unescape(msg, extra_format_dict={}):
             new_msg += char
 
     return new_msg
+
+
+def remove_formatting_codes(line, irc=False):
+    """Remove girc control codes from the given line."""
+    if irc:
+        line = escape(line)
+    new_line = ''
+    while len(line) > 0:
+        try:
+            if line[0] == '$':
+                line = line[1:]
+
+                if line[0] == '$':
+                    new_line += '$'
+                    line = line[1:]
+
+                elif line[0] == 'c':
+                    line = line[1:]
+                    if line[0].isdigit():
+                        line = line[1:]
+                        if line[0].isdigit():
+                            line = line[1:]
+                            if line[0] == ',':
+                                line = line[1:]
+                                if line[0].isdigit():
+                                    line = line[1:]
+                                    if line[0].isdigit():
+                                        line = line[1:]
+                        elif line[0] == ',':
+                            line = line[1:]
+                            if line[0].isdigit():
+                                line = line[1:]
+                                if line[0].isdigit():
+                                    line = line[1:]
+                    if line[0] == '[':
+                        while line[0] != ']':
+                            line = line[1:]
+                        line = line[1:]
+
+                elif line[0] == '{':
+                    if line[:2] == '$}':
+                        line += '$'
+                        continue
+                    while line[0] != '}':
+                        line = line[1:]
+                    line = line[1:]
+
+                else:
+                    line = line[1:]
+
+            else:
+                new_line += line[0]
+                line = line[1:]
+        except IndexError:
+            continue
+    return new_line
