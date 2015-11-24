@@ -95,10 +95,13 @@ class ServerConnection(asyncio.Protocol):
         """Register an event with all servers.
 
         Args:
-            direction (str): `in`, `out`, `both`, `raw`.
-            verb (str): Event name.
+            direction (str): `in`, `out`, `both`, or `girc`.
+            verb (str): Event name, `all`, or `raw`.
             child_fn (function): Handler function.
             priority (int): Handler priority (lower priority executes first).
+
+        Note: `all` will not match `raw` events. If you wish to receive both
+        `raw` and all other events, you need to register these separately.
         """
         event_managers = []
         if direction in ('in', 'both'):
