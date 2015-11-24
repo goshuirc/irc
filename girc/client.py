@@ -53,6 +53,7 @@ class ServerConnection(asyncio.Protocol):
             'away-notify',
             'cap-notify',
             'chghost',
+            'echo-message',
             'extended-join',
             'invite-notify',
             'metadata',

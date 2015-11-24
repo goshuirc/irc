@@ -40,7 +40,7 @@ class Capabilities:
     """Ingests sets of client capabilities and provides access to them."""
 
     def __init__(self, wanted=[]):
-        self.available = CaseInsensitiveDict()
+        self.available = CaseInsensitiveDict({'cap-notify': True})
         self.wanted = CaseInsensitiveList(wanted)
         self.enabled = CaseInsensitiveList()
 

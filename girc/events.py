@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+import time
+
 from .formatting import escape
 from .utils import NickMask, parse_modes
 
@@ -208,6 +210,10 @@ def message_to_event(direction, message):
     info['direction'] = direction
     info['verb'] = verb
 
+    if 'time' in info['tags']:
+        info['server_time'] = time.strptime(info['tags']['time'],
+                                            '%Y-%m-%dT%H:%M:%S.%fZ')
+
     infos = [[verb, info], ]
 
     # handle shitty ctcp
@@ -345,23 +351,16 @@ def message_to_event(direction, message):
         source = infos[i][INFO_ATTR].get('source')
         target = infos[i][INFO_ATTR].get('target')
 
-        if verb == 'privmsg':
-            if dir == 'in':
-                infos[i][INFO_ATTR]['from_to'] = source
-            elif dir == 'out':
-                infos[i][INFO_ATTR]['from_to'] = target
-        elif verb == 'pubmsg':
+        if verb in ['pubmsg', 'pubnotice']:
             infos[i][INFO_ATTR]['from_to'] = target
-        elif verb == 'privnotice':
-            if dir == 'in':
-                infos[i][INFO_ATTR]['from_to'] = source
-            elif dir == 'out':
+        elif verb in ['privmsg', 'privnotice']:
+            if dir == 'out':
                 infos[i][INFO_ATTR]['from_to'] = target
-        elif verb == 'pubnotice':
-            if dir == 'in':
-                infos[i][INFO_ATTR]['from_to'] = target
-            elif dir == 'out':
-                infos[i][INFO_ATTR]['from_to'] = target
+            elif dir == 'in':
+                if 'echo-message' in server.capabilities.enabled:
+                    infos[i][INFO_ATTR]['from_to'] = target
+                else:
+                    infos[i][INFO_ATTR]['from_to'] = source
 
         if 'from_to' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['from_to'].is_server:
             del infos[i][INFO_ATTR]['from_to']
