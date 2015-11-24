@@ -40,7 +40,7 @@ class Capabilities:
     """Ingests sets of client capabilities and provides access to them."""
 
     def __init__(self, wanted=[]):
-        self.available = CaseInsensitiveDict({'cap-notify': True})
+        self.available = CaseInsensitiveDict()
         self.wanted = CaseInsensitiveList(wanted)
         self.enabled = CaseInsensitiveList()
 
@@ -50,6 +50,8 @@ class Capabilities:
         if cmd == 'ls':
             for cap, value, mods in cap_list(parameters[0]):
                 self.available[cap] = (value, mods)
+                if cap == 'cap-notify' and cap not in self.enabled:
+                    self.enabled.append(cap)
 
         elif cmd == 'ack':
             for cap, value, mods in cap_list(parameters[0]):
