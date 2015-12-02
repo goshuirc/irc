@@ -362,6 +362,12 @@ def message_to_event(direction, message):
                 else:
                     infos[i][INFO_ATTR]['from_to'] = source
 
+        # convenience function so unnecessary messages can get ignored easily
+        infos[i][INFO_ATTR]['will_be_echod'] = False
+        if verb in ['pubmsg', 'pubnotice', 'privmsg', 'privnotice']:
+            if dir == 'out' and 'echo-message' in server.capabilities.enabled:
+                infos[i][INFO_ATTR]['will_be_echod'] = True
+
         if 'from_to' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['from_to'].is_server:
             del infos[i][INFO_ATTR]['from_to']
 
