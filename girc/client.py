@@ -26,6 +26,7 @@ class ServerConnection(asyncio.Protocol):
         self.connected = False
         self.registered = False
         self.ready = False
+        self.is_me = True
         self._events_in = EventManager()
         self._events_out = EventManager()
         self._girc_events = EventManager()
