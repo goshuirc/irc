@@ -140,6 +140,9 @@ class ServerConnection(asyncio.Protocol):
             raise Exception("Can't set user info now, we're already connected!")
 
         # server will pickup list when they exist
+        if not self.connected:
+            self.nick = nick
+
         self.connect_info['user'] = {
             'nick': nick,
             'user': user,
@@ -379,6 +382,13 @@ class ServerConnection(asyncio.Protocol):
         if mode_string:
             params += mode_string
         self.send('MODE', params=params, source=self.nick, tags=tags)
+
+    def topic(self, channel, new_topic=None, tags=None):
+        """Requests or sets the topic for the given channel."""
+        params = [channel]
+        if new_topic:
+            params += new_topic
+        self.send('TOPIC', params=params, source=self.nick, tags=tags)
 
     # default events
     def rpl_welcome(self, event):

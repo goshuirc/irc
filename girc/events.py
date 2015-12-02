@@ -60,7 +60,7 @@ _verb_param_map = {
             'topic', 'cmode',
         ),
         1: (
-            'endofnames', 'cmodeis', 'chancreatetime',
+            'endofnames', 'cmodeis', 'chancreatetime', 'notopic',
         ),
         2: (
             'namreply',
@@ -84,6 +84,9 @@ _verb_param_map = {
     'escaped_reason': {
         1: (
             'cannotsendtochan',
+        ),
+        2: (
+            'notopic',
         ),
     },
     'channels': {

@@ -23,6 +23,9 @@ class TargetableUserChan:
     def ctcp_reply(self, ctcp_verb, argument=None):
         self.s.ctcp_reply(self._target, ctcp_verb, argument=argument)
 
+    def get_topic(self):
+        self.s.topic(self._target)
+
     def get_modes(self):
         self.s.mode(self._target)
 
@@ -55,7 +58,7 @@ class User(ServerConnected, TargetableUserChan):
 
         self.channel_names = self.s.ilist()
 
-        # XXX - ASSUME WE WON'T GET ANY NOTICES/ETC FROM ANYONE ELSE BEFORE RPL_WELCOME
+        # XXX - this may not work if we get any notices/etc before RPL_WELCOME
         self.is_me = server_connection.nick is None or (self.nick == server_connection.nick)
 
     # properties
