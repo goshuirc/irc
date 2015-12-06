@@ -19,7 +19,7 @@ _verb_param_map = {
         0: (
             'privmsg', 'pubmsg', 'privnotice', 'pubnotice', 'ctcp',
             'umode', 'cmode', 'nosuchservice', 'ctcp_reply',
-            'targettoofast',
+            'targettoofast', 'yourebannedcreep',
         ),
         1: (
             'cmodeis',
@@ -364,6 +364,8 @@ def message_to_event(direction, message):
                     infos[i][INFO_ATTR]['from_to'] = target
                 else:
                     infos[i][INFO_ATTR]['from_to'] = source
+        if 'from_to' in infos[i][INFO_ATTR] and infos[i][INFO_ATTR]['from_to'] is None:
+            del infos[i][INFO_ATTR]['from_to']
 
         # convenience function so unnecessary messages can get ignored easily
         infos[i][INFO_ATTR]['will_be_echod'] = False
