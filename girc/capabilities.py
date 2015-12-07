@@ -48,7 +48,12 @@ class Capabilities:
         cmd = cmd.casefold()
 
         if cmd == 'ls':
-            for cap, value, mods in cap_list(parameters[0]):
+            if parameters[0] == '*':
+                caps = parameters[1]
+            else:
+                caps = parameters[0]
+
+            for cap, value, mods in cap_list(caps):
                 self.available[cap] = (value, mods)
                 if cap == 'cap-notify' and cap not in self.enabled:
                     self.enabled.append(cap)

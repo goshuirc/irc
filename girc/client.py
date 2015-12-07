@@ -400,7 +400,8 @@ class ServerConnection(asyncio.Protocol):
             clientname = params.pop(0)
         subcmd = params.pop(0).casefold()
 
-        self.capabilities.ingest(subcmd, params)
+        if event['direction'] == 'in':
+            self.capabilities.ingest(subcmd, params)
 
         # registration
         if subcmd in ['ack', 'nak'] and not self.registered:
@@ -411,7 +412,7 @@ class ServerConnection(asyncio.Protocol):
                 self.send_welcome()
 
         # enable caps we want
-        if subcmd == 'ls':
+        if subcmd == 'ls' and params[0] != '*':  # * specifies continuation list
             caps_to_enable = self.capabilities.to_enable
             if caps_to_enable:
                 self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
