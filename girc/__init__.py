@@ -13,8 +13,9 @@ loop = asyncio.get_event_loop()
 class Reactor:
     """Manages IRC connections."""
 
-    def __init__(self):
+    def __init__(self, auto_close=True):
         self.servers = CaseInsensitiveDict()
+        self.auto_close = auto_close
         self._event_handlers = {}
 
     # start and stop
@@ -30,10 +31,6 @@ class Reactor:
         """
         for name, server in self.servers.items():
             server.quit(message)
-
-    def close(self):
-        """Close the reactor, to be called after :meth:`girc.Reactor.run_forever` returns."""
-        loop.close()
 
     # setting connection info
     def create_server(self, server_name, *args, **kwargs):
@@ -63,6 +60,16 @@ class Reactor:
         self.servers[server_name] = server
 
         return server
+
+    def _destroy_server(self, server_name):
+        """Destroys the given server, called internally."""
+        try:
+            del self.servers[server_name]
+        except KeyError:
+            ...
+
+        if self.auto_close and not self.servers:
+            loop.stop()
 
     # events
     def handler(self, direction, verb, priority=10):

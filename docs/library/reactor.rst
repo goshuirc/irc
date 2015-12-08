@@ -9,8 +9,6 @@ This class is the way you create and manage IRC connections.
 
 .. automethod:: girc.Reactor.shutdown
 
-.. automethod:: girc.Reactor.close
-
 
 Registering events
 ------------------

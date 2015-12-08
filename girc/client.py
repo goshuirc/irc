@@ -257,6 +257,7 @@ class ServerConnection(asyncio.Protocol):
             print('Connection error: {}'.format(exc))
             return
         print('Connection closed')
+        self.reactor._destroy_server(self.name)
 
     # protocol send / receive
     def send(self, verb, params=None, source=None, tags=None):

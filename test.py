@@ -124,5 +124,3 @@ if __name__ == '__main__':
             reactor.run_forever()
         except KeyboardInterrupt:
             reactor.shutdown('Closed')
-
-        reactor.close()
