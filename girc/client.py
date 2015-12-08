@@ -77,9 +77,11 @@ class ServerConnection(asyncio.Protocol):
         self.register_event('both', 'ping', self.rpl_ping)
 
         # sasl stuff
+        self.allow_sasl_fail = False
         self._sasl_info = {}
         self.register_event('in', 'authenticate', self.rpl_authenticate)
         self.register_event('in', 'saslsuccess', self.rpl_saslsuccess)
+        self.register_event('in', 'saslfail', self.rpl_saslfail)
 
         self.reactor = reactor
 
@@ -244,7 +246,8 @@ class ServerConnection(asyncio.Protocol):
         if message is None:
             message = 'Quit'
 
-        self.send('QUIT', params=[message])
+        if self.connected:
+            self.send('QUIT', params=[message])
 
     def connection_lost(self, exc):
         if not self.connected:
@@ -444,6 +447,13 @@ class ServerConnection(asyncio.Protocol):
             # finish registration
             self.send('CAP', params=['END'])
             self.send_welcome()
+
+    def rpl_saslfail(self, event):
+        if not self.registered:
+            if self.allow_sasl_fail:
+                self.rpl_saslsuccess(event)
+            else:
+                self.quit('SASL authentication failed')
 
     def rpl_features(self, event):
         # last param is 'are supported by this server' text, so we ignore it
