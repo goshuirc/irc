@@ -406,6 +406,8 @@ class ServerConnection(asyncio.Protocol):
 
         if event['direction'] == 'in':
             self.capabilities.ingest(subcmd, params)
+        else:
+            return
 
         # registration
         if subcmd in ['ack', 'nak'] and not self.registered:
