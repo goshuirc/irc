@@ -24,6 +24,8 @@ Options:
     --ssl           Connect via SSL.
     --ipv4          Connect via IPv4.
     --ipv6          Connect via IPv6.
+
+    --quiet         Don't print raw lines
 """
 import socket
 
@@ -34,15 +36,20 @@ from girc.formatting import escape
 
 reactor = girc.Reactor()
 
+global quiet
+quiet = False
+
 
 @reactor.handler('in', 'raw', priority=1)
 def handle_raw_in(event):
-    print(event['server'].name, ' ->', escape(event['data']))
+    if not quiet:
+        print(event['server'].name, ' ->', escape(event['data']))
 
 
 @reactor.handler('out', 'raw', priority=1)
 def handle_raw_out(event):
-    print(event['server'].name, '<- ', escape(event['data']))
+    if not quiet:
+        print(event['server'].name, '<- ', escape(event['data']))
 
 
 @reactor.handler('in', 'pubmsg')
@@ -78,6 +85,7 @@ if __name__ == '__main__':
         use_ssl = arguments['--ssl']
         use_ipv4 = arguments['--ipv4']
         use_ipv6 = arguments['--ipv6']
+        quiet = arguments['--quiet']
 
         sasl_name = arguments['--sasl-name']
         sasl_pass = arguments['--sasl-pass']
@@ -101,7 +109,8 @@ if __name__ == '__main__':
         else:
             using = ''
 
-        print('Connecting to {h}:{p}'.format(h=host, p=port), using)
+        if not quiet:
+            print('Connecting to {h}:{p}'.format(h=host, p=port), using)
 
         # join
         if arguments['--ipv6']:
