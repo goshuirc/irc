@@ -409,17 +409,23 @@ class ServerConnection(asyncio.Protocol):
 
         # registration
         if subcmd in ['ack', 'nak'] and not self.registered:
-            if 'sasl' in self.capabilities.enabled and self._sasl_info:
-                self.start_sasl()
-            else:
-                self.send('CAP', params=['END'])
-                self.send_welcome()
+            self.start()
 
         # enable caps we want
         if subcmd == 'ls' and params[0] != '*':  # * specifies continuation list
             caps_to_enable = self.capabilities.to_enable
             if caps_to_enable:
                 self.send('CAP', params=['REQ', ' '.join(caps_to_enable)])
+            else:
+                self.start()
+
+    def start(self):
+        """Start our welcome!"""
+        if 'sasl' in self.capabilities.enabled and self._sasl_info:
+            self.start_sasl()
+        else:
+            self.send('CAP', params=['END'])
+            self.send_welcome()
 
     def send_welcome(self):
         info = self.connect_info['user']
