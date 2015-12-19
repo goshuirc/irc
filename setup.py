@@ -2,7 +2,10 @@
 # written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 with open('README.rst') as file:
     long_description = file.read()
@@ -17,6 +20,11 @@ setup(
     url='https://github.com/DanielOaks/girc',
     packages=['girc'],
     package_dir={'girc': 'girc'},
+    scripts=['girc_test'],
+    install_requires=['docopt', 'ircreactor'],
+    dependency_links=[
+        'git+https://github.com/mammon-ircd/ircreactor.git#egg=ircreactor',
+    ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

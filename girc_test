@@ -8,8 +8,8 @@ without any notice whatsoever, everything can be overhauled, and development
 may even stop entirely without any warning.
 
 Usage:
-    test.py connect [options] [<channel>...]
-    test.py (-h | --help)
+    girc_test connect [options] [<channel>...]
+    girc_test (-h | --help)
 
 Options:
     --nick=<nick>          Nick to connect with [default: girc].
