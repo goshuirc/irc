@@ -235,7 +235,6 @@ class ServerConnection(asyncio.Protocol):
         extra_info = transport.get_extra_info('peername')
         peername, port = extra_info[:2]
 
-        print('Connected to {}'.format(peername))
         self.transport = transport
         self.connected = True
 
