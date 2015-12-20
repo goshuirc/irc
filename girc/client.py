@@ -423,7 +423,11 @@ class ServerConnection(asyncio.Protocol):
 
     def start(self):
         """Start our welcome!"""
-        if 'sasl' in self.capabilities.enabled and self._sasl_info:
+        if ('sasl' in self.capabilities.enabled and self._sasl_info and
+                (not self.capabilities.available['sasl']['value'] or
+                    (self.capabilities.available['sasl']['value'] and
+                        self._sasl_info['method'] in
+                        self.capabilities.available['sasl']['value']))):
             self.start_sasl()
         else:
             self.send('CAP', params=['END'])
