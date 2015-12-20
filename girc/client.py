@@ -448,8 +448,15 @@ class ServerConnection(asyncio.Protocol):
                                      bytes(username, 'utf8') + b'\x00' +
                                      bytes(password, 'utf8'))
             reply = str(reply, 'utf8')
+            replies = []
+            while len(reply):
+                replies.append(reply[:400])
+                reply = reply[400:]
 
-        self.send('AUTHENTICATE', [reply])
+        for reply in replies:
+            self.send('AUTHENTICATE', [reply])
+        if len(replies[-1]) == 400:
+            self.send('AUTHENTICATE', ['+'])
 
     def rpl_saslsuccess(self, event):
         if not self.registered:
