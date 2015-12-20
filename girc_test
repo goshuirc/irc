@@ -18,6 +18,7 @@ Options:
     --connect-pass=<pass>  Connect password.
     --sasl-name=<name>     SASL name to authenticate with (PLAIN).
     --sasl-pass=<pass>     SASL password to authenticate with (PLAIN).
+    --sasl-fail-is-ok      SASL failure won't disconnect us from the network.
 
     --host=<host>   Host for the bot to connect to [default: localhost].
     --port=<port>   Port for the bot to connect to [default: 6667].
@@ -126,6 +127,8 @@ if __name__ == '__main__':
             server.set_connect_password(connect_pass)
         if sasl_name and sasl_pass:
             server.sasl_plain(sasl_name, sasl_pass)
+        if arguments['--sasl-fail-is-ok']:
+            server.allow_sasl_fail = True
         server.join_channels(*channels)
         server.connect(host, port, ssl=use_ssl, family=family)
 
