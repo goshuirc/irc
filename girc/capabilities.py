@@ -25,11 +25,13 @@ def cap_list(caps):
 
             mods.append(cap_modifiers[attr])
 
-        # either give string value or True if not specified
+        # either give string value or None if not specified
         if '=' in cap:
             cap, value = cap.rsplit('=', 1)
+            if value and cap.casefold() in ['sasl']:
+                value = CaseInsensitiveList(value.split(','))
         else:
-            value = True
+            value = None
 
         out.append([cap, value, mods])
 
@@ -54,7 +56,10 @@ class Capabilities:
                 caps = parameters[0]
 
             for cap, value, mods in cap_list(caps):
-                self.available[cap] = (value, mods)
+                self.available[cap] = {
+                    'value': value,
+                    'modifiers': mods,
+                }
                 if cap == 'cap-notify' and cap not in self.enabled:
                     self.enabled.append(cap)
 
