@@ -9,6 +9,7 @@ may even stop entirely without any warning.
 
 Usage:
     girc_test connect [options] [<channel>...]
+    girc_test --version
     girc_test (-h | --help)
 
 Options:
@@ -65,7 +66,7 @@ def handle_hi(event):
 @reactor.handler('in', 'ctcp')
 def handle_ctcp(event):
     if event['ctcp_verb'] == 'version':
-        event['source'].ctcp_reply('VERSION', 'girc test bot:git:python')
+        event['source'].ctcp_reply('VERSION', 'girc test bot/{}'.format(girc.__version__))
     elif event['ctcp_verb'] == 'source':
         event['source'].ctcp_reply('SOURCE', 'https://github.com/DanielOaks/girc')
     elif event['ctcp_verb'] == 'clientinfo':
@@ -73,7 +74,7 @@ def handle_ctcp(event):
 
 
 if __name__ == '__main__':
-    arguments = docopt(__doc__)
+    arguments = docopt(__doc__, version=girc.__version__)
 
     if arguments['connect']:
         nick = arguments['--nick']

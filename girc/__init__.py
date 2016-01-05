@@ -1,11 +1,38 @@
 #!/usr/bin/env python3
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
+"""girc is a modern IRC client library based on the asyncio framework.
+
+This library is in alpha and is not yet stable. This means that it
+may change at any time and it is not recommended to use this unless
+you are willing to tolerate and report some bugs and inconsistent
+behaviour.
+
+This library is in development, so these features may be in various
+levels of completion right now:
+
+    * Incoming and outgoing events.
+    * Info and state tracking.
+    * Server-based IRC mapping for dicts, lists, and strings.
+    * IRCv3 capability support.
+    * Escaping and unescaping IRC formatting for ease-of-use (bold,
+      colours, etc).
+
+For more information please see these links:
+
+    * Github Repo: https://github.com/DanielOaks/girc
+    * Hosted Documentation: http://girc.readthedocs.org/en/latest/
+
+Written by Daniel Oaks <daniel@danieloaks.net>, and released under
+the ISC license.
+"""
 import asyncio
 import functools
 
 from .client import ServerConnection
 from .utils import CaseInsensitiveDict
+
+__version__ = '0.1.0'
 
 loop = asyncio.get_event_loop()
 

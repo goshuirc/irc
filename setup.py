@@ -12,7 +12,7 @@ with open('README.rst') as file:
 
 setup(
     name='girc',
-    version='0.0.0',
+    version='0.1.0',
     description='A modern Python IRC library for Python 3.4, based on asyncio. In Development.',
     long_description=long_description,
     author='Daniel Oaks',
@@ -26,7 +26,7 @@ setup(
         'git+https://github.com/mammon-ircd/ircreactor.git#egg=ircreactor',
     ],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: ISC License (ISCL)',
