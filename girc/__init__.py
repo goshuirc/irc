@@ -32,7 +32,7 @@ import functools
 from .client import ServerConnection
 from .utils import CaseInsensitiveDict
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 loop = asyncio.get_event_loop()
 
