@@ -5,8 +5,8 @@ import asyncio
 import base64
 import re
 
-from ircreactor.events import EventManager
-from ircreactor.envelope import RFC1459Message
+from .ircreactor.events import EventManager
+from .ircreactor.envelope import RFC1459Message
 
 from .capabilities import Capabilities
 from .features import Features

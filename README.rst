@@ -34,3 +34,8 @@ So I decided to write my own. As part of `mammon-ircd <https://github.com/mammon
 Running Tests
 -------------
 To run the test cases, go to the ``tests`` directory and run: ``python3 -m unittest``.
+
+
+Acknowledgements
+----------------
+We bundle the `ircreactor <https://github.com/mammon-ircd/ircreactor>`_ library developed as a part of `mammon-ircd <https://github.com/mammon-ircd>`. This license for this library can be found in the ``LICENSE.ircreactor`` file._

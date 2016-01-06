@@ -2,29 +2,22 @@
 # written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
 
 with open('README.rst') as file:
     long_description = file.read()
 
 setup(
     name='girc',
-    version='0.1.0',
+    version='0.2.0',
     description='A modern Python IRC library for Python 3.4, based on asyncio. In Development.',
     long_description=long_description,
     author='Daniel Oaks',
     author_email='daniel@danieloaks.net',
     url='https://github.com/DanielOaks/girc',
-    packages=['girc'],
-    package_dir={'girc': 'girc'},
+    packages=find_packages(),
     scripts=['girc_test'],
-    install_requires=['docopt', 'ircreactor'],
-    dependency_links=[
-        'git+https://github.com/mammon-ircd/ircreactor.git#egg=ircreactor',
-    ],
+    install_requires=['docopt'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
