@@ -3,7 +3,7 @@
     :align: center
 
 
-A modern Python IRC library for Python 3.4, based on asyncio. In Development.
+A modern Python IRC library for Python 3.4, based on asyncio. Currently in alpha.
 
 ----
 
@@ -48,9 +48,9 @@ So I decided to write my own. As part of `mammon-ircd <https://github.com/mammon
 
 Running Tests
 -------------
-To run the test cases, go to the ``tests`` directory and run: ``python3 -m unittest``.
+To run the test cases, go to the ``tests`` directory and run: ``python3 -m unittest``, or use the ``./runtests`` shell script (which also produces coverage graphs).
 
 
 Acknowledgements
 ----------------
-We bundle the `ircreactor <https://github.com/mammon-ircd/ircreactor>`_ library developed as a part of `mammon-ircd <https://github.com/mammon-ircd>`_. This license for this library can be found in the ``LICENSE.ircreactor`` file.
+We bundle the `ircreactor <https://github.com/mammon-ircd/ircreactor>`_ library developed as a part of `mammon-ircd <https://github.com/mammon-ircd/mammon>`_. This license for this library can be found in the LICENSE.ircreactor file.
