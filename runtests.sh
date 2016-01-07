@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 pushd tests > /dev/null
 
 rm -rf .coverage > /dev/null
