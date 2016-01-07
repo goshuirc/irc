@@ -379,7 +379,7 @@ def message_to_event(direction, message):
     return infos
 
 
-# list adapted from https://www.alien.net.au/irc/irc2numerics.html
+# list adapted from http://defs.ircdocs.horse/defs/ircnumerics.html
 # some stuff in here is insane, but we can fix bad numerics as we find them
 # we prefer IRCv3 numerics over most everything else
 numerics = {
