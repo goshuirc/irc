@@ -15,6 +15,16 @@ class FormattingTestCase(unittest.TestCase):
         self.assertTrue(formatting.escape, msg=errmsg.format('escape'))
         self.assertTrue(formatting.unescape, msg=errmsg.format('unescape'))
 
+    def test_removing_formatting(self):
+        self.assertEqual(formatting.remove_formatting_codes('Lol \x03cool \x032tests\x0f!', irc=True),
+                         'Lol cool tests!')
+        self.assertEqual(formatting.remove_formatting_codes('Lol $c[]cool $c[blue]tests$r!'),
+                         'Lol cool tests!')
+        self.assertEqual(formatting.remove_formatting_codes('Lol $ccoo$c3,15l $c12,15tests$r!$$y'),
+                         'Lol cool tests!$y')
+        self.assertEqual(formatting.remove_formatting_codes('Lol co${yolo}ol ${$}tests!$'),
+                         'Lol cool $tests!')
+
     def test_colour_codes(self):
         self.assertEqual(formatting._ctos(5), 'brown')
         self.assertEqual(formatting._ctos(452), 'unknown: 452')

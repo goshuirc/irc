@@ -48,6 +48,15 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(nm1.user, nm2.user)
         self.assertEqual(nm1.host, nm2.host)
 
+        # check 'nickmask' attribute
+        class AlmostNickMask():
+            nickmask = 'dan!~lol@localhost'
+        nm = utils.NickMask(AlmostNickMask())
+
+        self.assertEqual(nm.nick, 'dan')
+        self.assertEqual(nm.user, '~lol')
+        self.assertEqual(nm.host, 'localhost')
+
     def test_caseinsensitivelist(self):
         ls = utils.CaseInsensitiveList(['LoL', 'yOLo', 'Tres'])
 
@@ -72,6 +81,21 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(dc.get('TRES'), [4, 5, 6])
 
         self.assertEqual(len(dc), 3)
+
+        del dc['lol']
+        self.assertEqual(len(dc), 2)
+
+        del dc['yole']
+        self.assertEqual(list(dc.items()), [('tRES', [4, 5, 6])])
+        self.assertEqual(list(dc.lower_items()), [('tres', [4, 5, 6])])
+
+        # test equality of dicts
+        dc2 = utils.CaseInsensitiveDict()
+        dc2['TrEs'] = [4, 5, 6]
+
+        self.assertEqual(dc, dc2)
+
+        self.assertEqual(dc, dc2.copy())
 
     def test_hostnames(self):
         hn = utils.validate_hostname
