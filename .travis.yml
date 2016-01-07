@@ -5,7 +5,12 @@ python:
 
 install:
   - "pip install -r requirements.txt"
+  - "pip install coveralls"
   - "python3 setup.py install"
 
 script:
   - "./runtests.sh"
+
+after_success:
+  - "cd tests"
+  - "coveralls"
