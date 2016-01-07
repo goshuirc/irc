@@ -2,7 +2,22 @@
     :alt: gIRC
     :align: center
 
+
 A modern Python IRC library for Python 3.4, based on asyncio. In Development.
+
+----
+
+.. image:: https://img.shields.io/pypi/v/girc.svg?label=latest%20version
+    :alt: PyPi Latest Version
+    :target: https://pypi.python.org/pypi/girc
+.. image:: https://travis-ci.org/DanielOaks/girc.svg?branch=master
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/DanielOaks/girc
+.. image:: https://coveralls.io/repos/DanielOaks/girc/badge.svg?branch=master&service=github
+    :alt: Coveralls Code Coverage
+    :target: https://coveralls.io/github/DanielOaks/girc?branch=master
+
+----
 
 This is barely in alpha right now. If you use this, anything can change without any notice whatsoever, everything can be overhauled, and development may even stop entirely without any warning.
 
