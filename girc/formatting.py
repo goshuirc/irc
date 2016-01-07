@@ -245,8 +245,9 @@ def remove_formatting_codes(line, irc=False):
                         line = line[1:]
 
                 elif line[0] == '{':
-                    if line[:2] == '$}':
-                        line += '$'
+                    if line[:3] == '{$}':
+                        new_line += '$'
+                        line = line[3:]
                         continue
                     while line[0] != '}':
                         line = line[1:]
