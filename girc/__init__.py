@@ -93,7 +93,7 @@ class Reactor:
         try:
             del self.servers[server_name]
         except KeyError:
-            ...
+            pass
 
         if self.auto_close and not self.servers:
             loop.stop()
