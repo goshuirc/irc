@@ -18,6 +18,7 @@
 from .events import EventManager
 from .envelope import RFC1459Message
 
+
 class IRCReactor(object):
     def __init__(self, ev_manager=None):
         if not ev_manager:

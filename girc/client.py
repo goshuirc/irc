@@ -400,7 +400,7 @@ class ServerConnection(asyncio.Protocol):
     def rpl_cap(self, event):
         params = list(event['params'])
         if event['direction'] == 'in':
-            clientname = params.pop(0)
+            params.pop(0)
         subcmd = params.pop(0).casefold()
 
         if event['direction'] == 'in':

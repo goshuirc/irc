@@ -26,6 +26,7 @@ _tag_unescapes = {
 }
 _tag_escapes = {v: k for k, v in _tag_unescapes.items()}
 
+
 def tag_unescape(orig):
     value = ''
     while len(orig):
@@ -40,6 +41,7 @@ def tag_unescape(orig):
 
     return value
 
+
 def tag_escape(orig):
     value = ''
     while len(orig):
@@ -51,6 +53,7 @@ def tag_escape(orig):
             value += char
 
     return value
+
 
 class RFC1459Message(object):
     @classmethod
@@ -131,7 +134,9 @@ class RFC1459Message(object):
         components = []
 
         if self.tags:
-            components.append('@' + ';'.join([k + '=' + tag_escape(v) for k, v in self.tags.items()]))
+            components.append('@' + ';'.join(
+                [k + '=' + tag_escape(v) for k, v in self.tags.items()]
+            ))
 
         if self.source:
             components.append(':' + self.source)
@@ -154,6 +159,7 @@ class RFC1459Message(object):
 
     def __str__(self):
         return 'RFC1459Message: "{0}"'.format(self.to_message())
+
 
 def test_rfc1459message():
     print('====== PARSER TESTS ======')

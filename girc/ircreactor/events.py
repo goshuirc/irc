@@ -19,6 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class EventObject(object):
     """An object for managing a specific event type.  Handles dispatch to interested subscribers.
        Call EventObject.dispatch() with the event message dictionary to actually do the dispatch.
@@ -38,6 +39,7 @@ class EventObject(object):
     def dispatch(self, ev_msg):
         [sub.callable(ev_msg) for sub in self.subscribers]
 
+
 class EventReceiver(object):
     """An internal object which tracks event subscriptions, acting as a handle for the event system.
        To unsubscribe an event, simply delete the handle, using del."""
@@ -54,6 +56,7 @@ class EventReceiver(object):
     def __del__(self):
         if self.eo:
             self.eo.detach(self)
+
 
 class EventManager(object):
     """A manager of events.  Manages EventObjects and EventReceivers.
