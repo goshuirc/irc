@@ -56,6 +56,7 @@ _verb_param_map = {
     },
     'channel': {
         0: (
+            'pubmsg',
             'cannotsendtochan',
             'topic', 'cmode',
         ),
