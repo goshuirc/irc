@@ -60,8 +60,6 @@ class Capabilities:
                     'value': value,
                     'modifiers': mods,
                 }
-                if cap == 'cap-notify' and cap not in self.enabled:
-                    self.enabled.append(cap)
 
         elif cmd == 'ack':
             for cap, value, mods in cap_list(parameters[0]):
