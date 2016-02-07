@@ -255,7 +255,12 @@ def message_to_event(direction, message):
             if infos[i][INFO_ATTR]['ctcp_verb'] == 'action':
                 info = dict(infos[i][INFO_ATTR])
                 info['message'] = info['ctcp_text']
-                infos.append(['action', info])
+                if server.is_channel(info['target']):
+                    name = 'pubaction'
+                    info['channel'] = info['target']
+                else:
+                    name = 'privaction'
+                infos.append([name, info])
 
         if name == 'umode' and len(infos[i][INFO_ATTR]['params']) > 1:
             modestring = infos[i][INFO_ATTR]['params'][1:]
@@ -355,9 +360,9 @@ def message_to_event(direction, message):
         source = infos[i][INFO_ATTR].get('source')
         target = infos[i][INFO_ATTR].get('target')
 
-        if verb in ['pubmsg', 'pubnotice']:
+        if verb in ['pubmsg', 'pubnotice', 'pubaction']:
             infos[i][INFO_ATTR]['from_to'] = target
-        elif verb in ['privmsg', 'privnotice']:
+        elif verb in ['privmsg', 'privnotice', 'privaction']:
             if dir == 'out':
                 infos[i][INFO_ATTR]['from_to'] = target
             elif dir == 'in':
