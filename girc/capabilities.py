@@ -63,13 +63,17 @@ class Capabilities:
 
         elif cmd == 'ack':
             for cap, value, mods in cap_list(parameters[0]):
-                if cap not in self.enabled:
-                    self.enabled.append(cap)
+                if cap.startswith('-'):
+                    cap = cap[1:]  # remove -
+                    if cap in self.enabled:
+                        self.enabled.remove(cap)
+                else:
+                    if cap not in self.enabled:
+                        self.enabled.append(cap)
 
         elif cmd == 'nak':
-            for cap, value, mods in cap_list(parameters[0]):
-                if cap in self.enabled:
-                    self.enabled.remove(cap)
+            # clients don't change any caps on a NAK
+            pass
 
     @property
     def to_enable(self):
