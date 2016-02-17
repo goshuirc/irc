@@ -19,7 +19,7 @@ A modern Python IRC library for Python 3.4, based on asyncio. Currently in alpha
 
 ----
 
-This is barely in alpha right now. If you use this, anything can change without any notice whatsoever, everything can be overhauled, and development may even stop entirely without any warning.
+If you use this, anything can change without notice, everything can be overhauled, and development may even stop entirely without any warning.
 
 If you would like to help build this, awesome! Otherwise, I'd stay away for now and use another library: `irc <https://bitbucket.org/jaraco/irc>`_, `irc3 <https://github.com/gawel/irc3/>`_.
 
