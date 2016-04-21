@@ -224,9 +224,7 @@ hostname_allowed_chars_tbl = str.maketrans('', '', hostname_allowed_chars)
 
 
 def validate_hostname(hostname):
-    if hostname.endswith('.'):
-        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
-    if len(hostname) < 1 or len(hostname) > 253:
+    if '.' not in hostname or len(hostname) < 1 or len(hostname) > 253:
         return False
     for part in hostname.split('.'):
         if len(part) < 1 or len(part) > 63 or part.startswith('-') or part.endswith('-'):
