@@ -21,15 +21,17 @@ Options:
     --sasl-pass=<pass>     SASL password to authenticate with (PLAIN).
     --sasl-fail-is-ok      SASL failure won't disconnect us from the network.
 
-    --host=<host>   Host for the bot to connect to [default: localhost].
-    --port=<port>   Port for the bot to connect to [default: 6667].
-    --ssl           Connect via SSL.
-    --ipv4          Connect via IPv4.
-    --ipv6          Connect via IPv6.
+    --host=<host>    Host for the bot to connect to [default: localhost].
+    --port=<port>    Port for the bot to connect to [default: 6667].
+    --ssl            Connect via SSL.
+    --ssl-no-verify  Don't verify the SSL connection.
+    --ipv4           Connect via IPv4.
+    --ipv6           Connect via IPv6.
 
     --quiet         Don't print raw lines
 """
 import socket
+import ssl
 
 from docopt import docopt
 
@@ -92,10 +94,18 @@ if __name__ == '__main__':
         sasl_name = arguments['--sasl-name']
         sasl_pass = arguments['--sasl-pass']
 
+        verify_ssl = not arguments['--ssl-no-verify']
+        if not verify_ssl:
+            use_ssl = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            use_ssl.verify_mode = ssl.CERT_NONE
+
         # let user know what we're doing
         using = []
         if use_ssl:
-            using.append('SSL')
+            if verify_ssl:
+                using.append('SSL')
+            else:
+                using.append('SSL [no cert validation]')
             # default to a sane SSL port
             if port == 6667:
                 port = 6697
