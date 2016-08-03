@@ -9,7 +9,7 @@ with open('README.rst') as file:
 
 setup(
     name='girc',
-    version='0.3.0',
+    version='0.3.1',
     description='A modern Python IRC library for Python 3.4, based on asyncio. In Development.',
     long_description=long_description,
     author='Daniel Oaks',
