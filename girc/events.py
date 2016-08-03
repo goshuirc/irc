@@ -272,7 +272,8 @@ def message_to_event(direction, message):
         if name == 'cmode' and len(infos[i][INFO_ATTR]['params']) > 1:
             modestring = infos[i][INFO_ATTR]['params'][1:]
             chanmodes = server.features.get('chanmodes')
-            modes = parse_modes(modestring, chanmodes)
+            prefixes = list(server.features.get('prefix').keys())
+            modes = parse_modes(modestring, chanmodes, prefixes)
 
             infos[i][INFO_ATTR]['modestring'] = ' '.join(modestring).strip()
             infos[i][INFO_ATTR]['modes'] = modes

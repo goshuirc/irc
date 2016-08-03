@@ -5,12 +5,27 @@ import collections
 import string
 
 
-def parse_modes(params, mode_types=None):
+def sort_prefixes(orig, prefixes='@+'):
+    """Returns a sorted list of prefixes.
+
+    Args:
+        orig (str): Unsorted list of prefixes.
+        prefixes (str): List of prefixes, from highest-priv to lowest.
+    """
+    new = ''
+    for prefix in prefixes:
+        if prefix in orig:
+            new += prefix
+    return new
+
+
+def parse_modes(params, mode_types=None, prefixes=''):
     """Return a modelist.
 
     Args:
         params (list of str): Parameters from MODE event.
         mode_types (list): CHANMODES-like mode types.
+        prefixes (str): PREFIX-like mode types.
     """
     # we don't accept bare strings because we don't want to try to do
     #   intelligent parameter splitting
@@ -32,7 +47,7 @@ def parse_modes(params, mode_types=None):
             direction = char
             continue
 
-        if (char in mode_types[0] or char in mode_types[1] or
+        if (char in mode_types[0] or char in mode_types[1] or char in prefixes or
                 (char in mode_types[2] and direction == '+') and len(args)):
             value = args.pop(0)
         else:

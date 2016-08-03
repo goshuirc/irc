@@ -2,7 +2,7 @@
 # Written by Daniel Oaks <daniel@danieloaks.net>
 # Released under the ISC license
 from .types import User, Channel, Server
-from .utils import NickMask, CaseInsensitiveDict
+from .utils import NickMask, CaseInsensitiveDict, sort_prefixes
 
 
 class Info:
@@ -39,6 +39,7 @@ class Info:
         self._in_handlers = {
             'join': self.in_join_handler,
             'part': self.in_part_handler,
+            'quit': self.in_quit_handler,
             'cmode': self.in_cmode_handler,
         }
 
@@ -88,6 +89,25 @@ class Info:
             if user.nick in chan.users:
                 del chan.users[user.nick]
 
+            if user.nick in chan.prefixes:
+                del chan.prefixes[user.nick]
+
+            if chan.name in user.channel_names:
+                user.channel_names.remove(chan.name)
+
+            if user.nick == self.s.nick:
+                chan.joined = False
+
+    def in_quit_handler(self, event):
+        user = event['source']
+
+        for chan in user.channels:
+            if user.nick in chan.users:
+                del chan.users[user.nick]
+
+            if user.nick in chan.prefixes:
+                del chan.prefixes[user.nick]
+
             if chan.name in user.channel_names:
                 user.channel_names.remove(chan.name)
 
@@ -96,6 +116,7 @@ class Info:
 
     def in_cmode_handler(self, event):
         channel = event['channel']
+        prefixes = event['server'].features.get('prefix')
 
         for unary, char, argument in event['modes']:
             if unary == '+':
@@ -103,6 +124,9 @@ class Info:
                     if char in channel.modes and isinstance(channel.modes[char], list):
                         if argument not in channel.modes[char]:
                             channel.modes[char].append(argument)
+                    elif char in prefixes:
+                        sorted_prefix_list = ''.join(reversed(list(prefixes.values())))
+                        channel.prefixes[argument] = sort_prefixes(channel.prefixes[argument] + prefixes[char], sorted_prefix_list)
                     else:
                         channel.modes[char] = argument
                 else:
@@ -112,6 +136,8 @@ class Info:
                     if char in channel.modes and isinstance(channel.modes[char], list):
                         if argument in channel.modes[char]:
                             channel.modes[char].remove(argument)
+                    elif char in prefixes:
+                        channel.prefixes[argument] = channel.prefixes[argument].replace(prefixes[char], '')
                 else:
                     if char in channel.modes:
                         del channel.modes[char]
