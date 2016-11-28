@@ -93,7 +93,7 @@ class RFC1459Message(object):
                     k, v = tag.split('=', 1)
                     tags[k] = tag_unescape(v)
                 else:
-                    tags[tag] = True
+                    tags[tag] = None
 
         source = None
         if s[0].startswith(':'):
@@ -113,8 +113,10 @@ class RFC1459Message(object):
                 arg = ' '.join(original_params)[1:]
                 params.append(arg)
                 break
-            else:
+            elif len(original_params[0]):
                 params.append(original_params.pop(0))
+            else:
+                original_params.pop(0)
 
         return cls.from_data(verb, params, source, tags)
 
@@ -135,7 +137,7 @@ class RFC1459Message(object):
 
         if self.tags:
             components.append('@' + ';'.join(
-                [k + '=' + tag_escape(v) for k, v in self.tags.items()]
+                [k + '=' + tag_escape(v) if v is not None else k for k, v in self.tags.items()]
             ))
 
         if self.source:
