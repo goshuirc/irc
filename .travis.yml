@@ -2,21 +2,27 @@ language: python
 sudo: true
 dist: xenial
 python:
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-
+- '3.4'
+- '3.5'
+- '3.6'
+- '3.7'
 install:
-  - "pip install -r requirements.txt"
-  - "pip install coveralls"
-  - "python3 setup.py install"
-
+- pip install -r requirements.txt
+- pip install coveralls
+- python3 setup.py install
 script:
-  - "./runtests.sh"
-  # Make sure the python code can at least compile
-  - "python -m compileall girc"
-
+- "./runtests.sh"
+- python -m compileall girc
 after_success:
-  - "cd tests"
-  - "coveralls"
+- cd tests
+- coveralls
+deploy:
+  provider: pypi
+  user: linuxdaemon
+  password:
+    secure: fSiiHYUbXX6sC6IVl0iElp3L+ySgOWShGzM388WBxtWZOs8dz9F0UT9X0PbKiEJPTLYCqSLpO7gwBhwtbrK6elQgyKh7jC6yntZSYOK8ljsSq+peVgXScN3caTT3AW2yc9XAuGhXF74hptvlIDkX+2S5B0N62fQk5pDV9D0jmAWSkEVp239nYkYcdm4FknD9UldgakVZ14qvnShlI4QvgeE3iu2XGpug8JFE6f33jBW0ueZYDZjBlve9ErfZzVZHSPSi7i9V7poaspt3++3pRuAMcw1Q+W6/CN1sX4sD8TDRLBvvDbkYMpOMLGq0kYqz0f9xLo9y5iytlIBjnDG7NoHzozkRJtY6WdO6+cUvKSanrACJLl2lgT2E13vu2F22tgf2WpSsfFdVk6HJ6z+l03aEC7H45Lk1LybzZkBHVTyoXM3ExDL9Bfcr7f74J5suTa1ywOO6H/jLA72A1ySvr8jo+KQ0Wzfz5GdQ5JMjdMU9HFTLv3NSCyMyMMD2MV9N2x+uY6I/Bq5+k5wSSjLfxO3bJ0l8qVFi+PesHHM9SjR2ZTqAPBc/9SQ5Y1rt9CEMl2W/ZndVgu+MrdSC1wdbesPLrjuIRk7PTaGv/HbJr9LY4uT5+oIbJJFiQ9sJlb+GB2yo7P36vJorTeopIeAiI1uLNpTwZ9iK8fORfonfYuQ=
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
+    repo: goshuirc/irc
+    python: '3.5'
