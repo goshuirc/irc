@@ -1,4 +1,4 @@
-.. image:: https://cdn.rawgit.com/DanielOaks/girc/master/docs/logo.png
+.. image:: https://github.com/goshuirc/irc/raw/master/docs/logo.png
     :alt: gIRC
     :align: center
 
@@ -10,12 +10,12 @@ A modern Python IRC library for Python 3.4, based on asyncio. Currently in alpha
 .. image:: https://img.shields.io/pypi/v/girc.svg?label=latest%20version
     :alt: PyPi Latest Version
     :target: https://pypi.python.org/pypi/girc
-.. image:: https://travis-ci.org/DanielOaks/girc.svg?branch=master
+.. image:: https://travis-ci.org/goshuirc/irc.svg?branch=master
     :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/DanielOaks/girc
-.. image:: https://coveralls.io/repos/DanielOaks/girc/badge.svg?branch=master&service=github
+    :target: https://travis-ci.org/goshuirc/irc
+.. image:: https://coveralls.io/repos/goshuirc/irc/badge.svg?branch=master&service=github
     :alt: Coveralls Code Coverage
-    :target: https://coveralls.io/github/DanielOaks/girc?branch=master
+    :target: https://coveralls.io/github/goshuirc/irc?branch=master
 
 ----
 
