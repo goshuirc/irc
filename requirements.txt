@@ -1,3 +1,4 @@
 docopt
 sphinx_py3doc_enhanced_theme
 coverage
+irc-parser-tests

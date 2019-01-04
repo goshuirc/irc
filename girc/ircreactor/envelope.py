@@ -33,6 +33,9 @@ def tag_unescape(orig):
         char = orig[0]
         orig = orig[1:]
         if char == '\\':
+            if not orig:
+                break
+
             escape = orig[0]
             orig = orig[1:]
             value += _tag_unescapes.get(escape, escape)
