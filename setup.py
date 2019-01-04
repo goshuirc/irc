@@ -4,12 +4,14 @@
 
 from setuptools import setup, find_packages
 
+import girc
+
 with open('README.rst') as file:
     long_description = file.read()
 
 setup(
     name='girc',
-    version='0.3.1',
+    version=girc.__version__,
     description='A modern Python IRC library for Python 3.4, based on asyncio. In Development.',
     long_description=long_description,
     author='Daniel Oaks',
