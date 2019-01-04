@@ -11,8 +11,11 @@ install:
 - pip install coveralls
 - python3 setup.py install
 script:
-- "./runtests.sh"
-- python -m compileall girc
+- "coverage run --source girc -m unittest"
+- "coverage report -m"
+- "coverage html"
+# Make sure the python code can at least compile
+- "python -m compileall girc"
 after_success:
 - cd tests
 - coveralls
