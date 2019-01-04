@@ -3,7 +3,6 @@
 # Released under the ISC license
 import unittest
 
-import base
 from girc import utils
 
 
