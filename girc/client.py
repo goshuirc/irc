@@ -5,6 +5,7 @@ import asyncio
 import base64
 import re
 
+from . import asyncio_compat
 from .ircreactor.events import EventManager
 from .ircreactor.envelope import RFC1459Message
 
@@ -497,10 +498,8 @@ class ServerConnection(asyncio.Protocol):
                 def channel_joiner(seconds_to_wait, channels):
                     yield from asyncio.sleep(seconds_to_wait)
                     self.join_channels(*channels)
-                try:
-                    asyncio.ensure_future(channel_joiner(seconds, channels))
-                except AttributeError:
-                    asyncio.async(channel_joiner(seconds, channels))
+
+                asyncio_compat.ensure_future(channel_joiner(seconds, channels))
             else:
                 self.join_channels(*channels)
 
