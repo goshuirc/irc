@@ -11,7 +11,7 @@ install:
 script:
   - "./runtests.sh"
   # Make sure the python code can at least compile
-  - "python -m compileall"
+  - "python -m compileall girc"
 
 after_success:
   - "cd tests"
