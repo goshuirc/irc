@@ -36,7 +36,7 @@ _verb_param_map = {
         ),
     },
     'user': {
-        0: (
+        1: (
             'kick',
         ),
     },
@@ -51,7 +51,10 @@ _verb_param_map = {
         1: (
             'privmsg', 'pubmsg', 'privnotice', 'pubnotice',
             'nosuchnick', 'nosuchserver', 'nosuchchannel', 'nosuchservice',
-            'targettoofast', 'kick', 'welcome',
+            'targettoofast', 'welcome',
+        ),
+        2: (
+            'kick',
         ),
     },
     'channel': {
@@ -59,6 +62,7 @@ _verb_param_map = {
             'pubmsg',
             'cannotsendtochan',
             'topic', 'cmode',
+            'kick',
         ),
         1: (
             'endofnames', 'cmodeis', 'chancreatetime', 'notopic',
