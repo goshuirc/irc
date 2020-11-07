@@ -3,6 +3,7 @@ Version independent compat wrapper for asyncio
 """
 
 import asyncio
+import sys
 
 __all__ = ('ensure_future',)
 
